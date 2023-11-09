@@ -7,10 +7,10 @@
 int main()
 {
 	IVM::Data data;
-	data.read_data("Instance2_Jens.txt");
+	data.read_data("Instance1_Jens.txt");
 	data.print_data();
 
-	IVM::IP_model_fleet_size model;
+	IVM::IP_model_monolithic model;
 	try {
 		model.run(data);
 	} 

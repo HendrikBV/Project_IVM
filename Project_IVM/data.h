@@ -180,6 +180,13 @@ namespace IVM
 		double t_trip1(int customer) const { return _customers[customer]._t_trip1; }
 
 		/*!
+		 *	@brief Get the time for a type 2 trip to the customer for customer m
+		 *  @param	customer	The index of the customer
+		 *  @returns	The time for a type 2 trip to the customer for customer m
+		 */
+		double t_trip2(int customer) const { return _customers[customer]._t_trip2; }
+
+		/*!
 		 *	@brief Get the demand to be collected at customer m
 		 *  @param	customer	The index of the customer
 		 *  @returns	The demand to be collected at customer m

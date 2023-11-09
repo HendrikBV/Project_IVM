@@ -92,13 +92,26 @@ namespace IVM
 		 */
 		void clear_cplex();
 
+		/*!
+		 *	@brief CPLEX solve time limit (seconds)
+		 */
+		double _time_limit = 120;
+
 	public:
 		/*!
 		 *	@brief Build and solve the MIP model
 		 *  @param	data	The problem data
 		 */
 		void run(const Data& data);
+
+		/*!
+		 *	@brief Set a time limit on the maximum time CPLEX can take to solve the model
+		 *  @param	time_limit	The time limit
+		 */
+		void set_time_limit(double time_limit) { _time_limit = time_limit; }
 	};
+
+
 
 	class IP_column_generation
 	{

@@ -49,6 +49,8 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
+		const double big_M = 1000;
+
 		// allocate memory
 		const size_t maxnonzeroes = std::max(data.vehicles() * data.days(), data.vehicles() * data.nb_customers()) + 100;
 		matind = std::make_unique<int[]>(maxnonzeroes);
@@ -70,7 +72,7 @@ namespace IVM
 			{
 				for (int d = 0; d < data.days(); ++d)
 				{
-					obj[0] = 0;
+					obj[0] = data.cost_hour() * data.t_trip1(m);
 					lb[0] = 0;
 					ub[0] = 1;
 					type[0] = 'B';
@@ -102,7 +104,7 @@ namespace IVM
 			{
 				for (int d = 0; d < data.days(); ++d)
 				{
-					obj[0] = 0;
+					obj[0] = data.cost_hour() * data.t_trip2(m);
 					lb[0] = 0;
 					type[0] = 'I';
 
@@ -115,7 +117,7 @@ namespace IVM
 
 					// change variable name
 					std::string varname = "y2_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
-					status = CPXchgname(env, problem, 'c', v * data.nb_customers() * data.days() + m * data.days() + d, varname.c_str());
+					status = CPXchgname(env, problem, 'c', startindex_y2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d, varname.c_str());
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
@@ -174,8 +176,8 @@ namespace IVM
 					}
 
 					// change variable name
-					std::string varname = "x1_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
-					status = CPXchgname(env, problem, 'c', startindex_x1_vmd + v * data.nb_customers() * data.days() + m * data.days() + d, varname.c_str());
+					std::string varname = "x2_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'c', startindex_x2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d, varname.c_str());
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
@@ -215,9 +217,9 @@ namespace IVM
 		}
 
 		// variable z
-		const int startindex_z = 2 * data.vehicles() * data.nb_customers() * data.days() + data.nb_customers() * data.days();
+		const int startindex_z = startindex_w_md + data.nb_customers() * data.days();
 		{
-			obj[0] = 1;
+			obj[0] = data.cost_vehicle();
 			lb[0] = 0;
 			type[0] = 'I';
 
@@ -230,7 +232,7 @@ namespace IVM
 
 			// change variable name
 			std::string varname = "z";
-			status = CPXchgname(env, problem, 'c', 2 * data.vehicles() * data.nb_customers() * data.days() + data.nb_customers() * data.days(), varname.c_str());
+			status = CPXchgname(env, problem, 'c', startindex_z, varname.c_str());
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
@@ -289,7 +291,54 @@ namespace IVM
 			}
 		}
 
-		// 2: sum(v,d) x1_vmd == Qm     forall m
+		// 2: x2_vmd - L * y2_vmd <= 0     forall v,m,d
+		for (int v = 0; v < data.vehicles(); ++v)
+		{
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'L';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// x2_vmd
+					matind[nonzeroes] = startindex_x2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = 1;
+					++nonzeroes;
+
+					// y2_vmd
+					matind[nonzeroes] = startindex_y2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = -data.max_load();
+					++nonzeroes;
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c2_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// 3: sum(v,d) (x1_vmd + x2_vmd) == Qm     forall m
 		for (int m = 0; m < data.nb_customers(); ++m)
 		{
 			++nb_constraints;
@@ -311,6 +360,17 @@ namespace IVM
 				}
 			}
 
+			// x2_vmd
+			for (int v = 0; v < data.vehicles(); ++v)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					matind[nonzeroes] = startindex_x2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = 1;
+					++nonzeroes;
+				}
+			}
+
 			if (nonzeroes >= maxnonzeroes)
 				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
@@ -322,7 +382,7 @@ namespace IVM
 			}
 
 			// change name of constraint
-			std::string conname = "c2_" + std::to_string(m + 1);
+			std::string conname = "c3_" + std::to_string(m + 1);
 			status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 			if (status != 0)
 			{
@@ -331,7 +391,7 @@ namespace IVM
 			}
 		}
 
-		// 3: sum(m) (s_m*x1_vmd + t1_m * y1_vmd) <= T   forall v,d
+		// 4: sum(m) (s_m*(x1_vmd + x2_vmd) + t1_m*y1_vmd + t2_m*y2_vmd) <= T   forall v,d
 		for (int v = 0; v < data.vehicles(); ++v)
 		{
 			for (int d = 0; d < data.days(); ++d)
@@ -352,11 +412,27 @@ namespace IVM
 					++nonzeroes;
 				}
 
+				// x2_vmd
+				for (int m = 0; m < data.nb_customers(); ++m)
+				{
+					matind[nonzeroes] = startindex_x2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = data.collection_speed(m);
+					++nonzeroes;
+				}
+
 				// y1_vmd
 				for (int m = 0; m < data.nb_customers(); ++m)
 				{
 					matind[nonzeroes] = startindex_y1_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
 					matval[nonzeroes] = data.t_trip1(m);
+					++nonzeroes;
+				}
+
+				// y1_vmd
+				for (int m = 0; m < data.nb_customers(); ++m)
+				{
+					matind[nonzeroes] = startindex_y2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = data.t_trip2(m);
 					++nonzeroes;
 				}
 
@@ -371,7 +447,7 @@ namespace IVM
 				}
 
 				// change name of constraint
-				std::string conname = "c3_" + std::to_string(v + 1) + "_" + std::to_string(d + 1);
+				std::string conname = "c4_" + std::to_string(v + 1) + "_" + std::to_string(d + 1);
 				status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 				if (status != 0)
 				{
@@ -381,7 +457,7 @@ namespace IVM
 			}
 		}
 
-		// 4: sum(m) y1_vmd <= 1   forall v,d
+		// 5: sum(m) y1_vmd <= 1   forall v,d
 		for (int v = 0; v < data.vehicles(); ++v)
 		{
 			for (int d = 0; d < data.days(); ++d)
@@ -413,7 +489,7 @@ namespace IVM
 				}
 
 				// change name of constraint
-				std::string conname = "c4_" + std::to_string(v + 1) + "_" + std::to_string(d + 1);
+				std::string conname = "c5_" + std::to_string(v + 1) + "_" + std::to_string(d + 1);
 				status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 				if (status != 0)
 				{
@@ -423,7 +499,57 @@ namespace IVM
 			}
 		}
 
-		// 5: z - sum(v,m) y1_vmd >= 0       forall d
+		// 6: N*sum(m') y1_vm'd - y2_vmd >= 0     forall v,m,d
+		for (int v = 0; v < data.vehicles(); ++v)
+		{
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'G';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// y1_vm'd
+					for (int mm = 0; mm < data.nb_customers(); ++mm)
+					{
+						matind[nonzeroes] = startindex_y1_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+						matval[nonzeroes] = big_M;
+						++nonzeroes;
+					}
+
+					// y2_vmd
+					matind[nonzeroes] = startindex_y2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = -1;
+					++nonzeroes;
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c6_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// 7: z - sum(v,m) y1_vmd >= 0       forall d
 		for (int d = 0; d < data.days(); ++d)
 		{
 			++nb_constraints;
@@ -461,7 +587,7 @@ namespace IVM
 			}
 
 			// change name of constraint
-			std::string conname = "c5_" + std::to_string(d + 1);
+			std::string conname = "c7_" + std::to_string(d + 1);
 			status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 			if (status != 0)
 			{
@@ -470,7 +596,7 @@ namespace IVM
 			}
 		}
 
-		// 6: w_md - y1_vmd >= 0    forall v,m,d
+		// 8: w_md - y1_vmd >= 0    forall v,m,d
 		for (int v = 0; v < data.vehicles(); ++v)
 		{
 			for (int m = 0; m < data.nb_customers(); ++m)
@@ -480,7 +606,7 @@ namespace IVM
 					++nb_constraints;
 
 					rhs[0] = 0;
-					sense[0] = 'L';
+					sense[0] = 'G';
 					matbeg[0] = 0;
 
 					nonzeroes = 0;
@@ -506,7 +632,7 @@ namespace IVM
 					}
 
 					// change name of constraint
-					std::string conname = "c6_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					std::string conname = "c8_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
 					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 					if (status != 0)
 					{
@@ -517,7 +643,54 @@ namespace IVM
 			}
 		}
 
-		// 7: sum(d) w_md <= W_m    forall m
+		// 9: bigM*w_md - y2_vmd >= 0    forall v,m,d
+		for (int v = 0; v < data.vehicles(); ++v)
+		{
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'G';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// w_md
+					matind[nonzeroes] = startindex_w_md + m * data.days() + d;
+					matval[nonzeroes] = big_M;
+					++nonzeroes;
+
+					// y2_vmd
+					matind[nonzeroes] = startindex_y2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = -1;
+					++nonzeroes;
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c9_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// 10: sum(d) w_md <= W_m    forall m
 		for (int m = 0; m < data.nb_customers(); ++m)
 		{
 			++nb_constraints;
@@ -547,7 +720,7 @@ namespace IVM
 			}
 
 			// change name of constraint
-			std::string conname = "c7_" + std::to_string(m + 1);
+			std::string conname = "c10_" + std::to_string(m + 1);
 			status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 			if (status != 0)
 			{
@@ -573,12 +746,21 @@ namespace IVM
 		std::unique_ptr<double[]> solution_problem;
 		double objval;
 
+		// Set time limit (in seconds)
+		status = CPXsetdblparam(env, CPXPARAM_TimeLimit, _time_limit);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_model_monolithic::solve_problem(). \nCouldn't set time limit. \nReason: " + std::string(error_text));
+		}
+
 		// Assign memory for solution
+		int numcols = CPXgetnumcols(env, problem);
 		solution_problem = std::make_unique<double[]>(CPXgetnumcols(env, problem));
 
 
 		// Optimize the problem
-		std::cout << "\n\n\nIP_model_fleet_size: CPLEX is solving the problem ...\n";
+		std::cout << "\n\n\nIP_model_monolithic: CPLEX is solving the problem ...\n";
 		auto start_time = std::chrono::system_clock::now();
 
 		status = CPXmipopt(env, problem);

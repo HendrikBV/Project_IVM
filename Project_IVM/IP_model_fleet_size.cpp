@@ -420,7 +420,7 @@ namespace IVM
 					++nb_constraints;
 
 					rhs[0] = 0;
-					sense[0] = 'L';
+					sense[0] = 'G';
 					matbeg[0] = 0;
 
 					nonzeroes = 0;
