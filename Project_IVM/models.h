@@ -14,8 +14,8 @@ namespace IVM
 		CPXENVptr env = nullptr;
 		CPXLPptr problem = nullptr;
 		
-		void initialize_cplex(const Data& data);
-		void build_problem();
+		void initialize_cplex();
+		void build_problem(const Data& data);
 		void solve_problem();
 		void clear_cplex();
 
