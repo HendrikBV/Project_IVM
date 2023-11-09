@@ -10,7 +10,7 @@ int main()
 	data.read_data("Instance1_Jens.txt");
 	data.print_data();
 
-	IVM::IP_model_monolithic model;
+	IVM::IP_VNDS model;
 	try {
 		model.run(data);
 	} 

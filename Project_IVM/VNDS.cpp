@@ -9,10 +9,10 @@
 namespace IVM
 {
 	///////////////////////////////////////////
-	///			IP Model Monolithic			///
+	///			Fix-and-optimize			///
 	///////////////////////////////////////////
 
-	void IP_model_monolithic::initialize_cplex()
+	void IP_VNDS::initialize_cplex()
 	{
 		int status = 0;
 		char error_text[CPXMESSAGEBUFSIZE];
@@ -22,19 +22,19 @@ namespace IVM
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::initialize_cplex(). \nCouldn't open CPLEX. \nReason: " + std::string(error_text));
+			throw std::runtime_error("Error in function IP_VNDS::initialize_cplex(). \nCouldn't open CPLEX. \nReason: " + std::string(error_text));
 		}
 
 		// turn output to screen on/off
-		status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
+		status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_OFF);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::initialize_cplex(). \nCouldn't change param SCRIND. \nReason: " + std::string(error_text));
+			throw std::runtime_error("Error in function IP_VNDS::initialize_cplex(). \nCouldn't change param SCRIND. \nReason: " + std::string(error_text));
 		}
 	}
 
-	void IP_model_monolithic::build_problem(const Data& data)
+	void IP_VNDS::build_problem(const Data& data)
 	{
 		char error_text[CPXMESSAGEBUFSIZE];
 		int status = 0;
@@ -49,7 +49,7 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
-		const double big_M = 50;
+		const double big_M = 50; // good value???
 
 		// allocate memory
 		const size_t maxnonzeroes = std::max(data.vehicles() * data.days(), data.vehicles() * data.nb_customers()) + 100;
@@ -58,7 +58,7 @@ namespace IVM
 
 
 		// create the problem
-		problem = CPXcreateprob(env, &status, "IP_model_monolithic");
+		problem = CPXcreateprob(env, &status, "IP_VNDS");
 
 		// problem is minimization
 		status = CPXchgobjsen(env, problem, CPX_MIN);
@@ -81,7 +81,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
 					}
 
 					// change variable name
@@ -90,14 +90,14 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
 		}
 
 		// variable y_2_vmd
-		const int startindex_y2_vmd = data.vehicles()*data.nb_customers()*data.days();
+		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
 		for (int v = 0; v < data.vehicles(); ++v)
 		{
 			for (int m = 0; m < data.nb_customers(); ++m)
@@ -112,7 +112,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
 					}
 
 					// change variable name
@@ -121,7 +121,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -142,7 +142,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
 					}
 
 					// change variable name
@@ -151,7 +151,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -172,7 +172,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
 					}
 
 					// change variable name
@@ -181,7 +181,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -202,7 +202,7 @@ namespace IVM
 				if (status != 0)
 				{
 					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
 				}
 
 				// change variable name
@@ -211,7 +211,7 @@ namespace IVM
 				if (status != 0)
 				{
 					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
 				}
 			}
 		}
@@ -227,7 +227,7 @@ namespace IVM
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
 			}
 
 			// change variable name
@@ -236,7 +236,7 @@ namespace IVM
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
 			}
 		}
 
@@ -270,13 +270,13 @@ namespace IVM
 					++nonzeroes;
 
 					if (nonzeroes >= maxnonzeroes)
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 					}
 
 					// change name of constraint
@@ -285,7 +285,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -317,13 +317,13 @@ namespace IVM
 					++nonzeroes;
 
 					if (nonzeroes >= maxnonzeroes)
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 					}
 
 					// change name of constraint
@@ -332,7 +332,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -372,13 +372,13 @@ namespace IVM
 			}
 
 			if (nonzeroes >= maxnonzeroes)
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 			status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 			}
 
 			// change name of constraint
@@ -387,7 +387,7 @@ namespace IVM
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 			}
 		}
 
@@ -437,13 +437,13 @@ namespace IVM
 				}
 
 				if (nonzeroes >= maxnonzeroes)
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 				status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 				if (status != 0)
 				{
 					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 				}
 
 				// change name of constraint
@@ -452,7 +452,7 @@ namespace IVM
 				if (status != 0)
 				{
 					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 				}
 			}
 		}
@@ -479,13 +479,13 @@ namespace IVM
 				}
 
 				if (nonzeroes >= maxnonzeroes)
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 				status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 				if (status != 0)
 				{
 					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 				}
 
 				// change name of constraint
@@ -494,7 +494,7 @@ namespace IVM
 				if (status != 0)
 				{
 					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 				}
 			}
 		}
@@ -528,13 +528,13 @@ namespace IVM
 					++nonzeroes;
 
 					if (nonzeroes >= maxnonzeroes)
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 					}
 
 					// change name of constraint
@@ -543,7 +543,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -577,13 +577,13 @@ namespace IVM
 			++nonzeroes;
 
 			if (nonzeroes >= maxnonzeroes)
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 			status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 			}
 
 			// change name of constraint
@@ -592,7 +592,7 @@ namespace IVM
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 			}
 		}
 
@@ -622,13 +622,13 @@ namespace IVM
 					++nonzeroes;
 
 					if (nonzeroes >= maxnonzeroes)
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 					}
 
 					// change name of constraint
@@ -637,7 +637,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -669,13 +669,13 @@ namespace IVM
 					++nonzeroes;
 
 					if (nonzeroes >= maxnonzeroes)
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 					}
 
 					// change name of constraint
@@ -684,7 +684,7 @@ namespace IVM
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
-						throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 					}
 				}
 			}
@@ -710,13 +710,13 @@ namespace IVM
 			}
 
 			if (nonzeroes >= maxnonzeroes)
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
 			status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
 			}
 
 			// change name of constraint
@@ -725,77 +725,20 @@ namespace IVM
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
 			}
 		}
 
 		// write to file
-		status = CPXwriteprob(env, problem, "IP_model_monolithic.lp", NULL);
+		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::build_problem(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+			throw std::runtime_error("Error in function IP_VNDS::build_problem(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
 		}
 	}
 
-	void IP_model_monolithic::solve_problem(const Data& data)
-	{
-		char error_text[CPXMESSAGEBUFSIZE];
-		int status = 0;
-		int solstat = 0;
-		std::unique_ptr<double[]> solution_problem;
-		double objval;
-
-		// Set time limit (in seconds)
-		status = CPXsetdblparam(env, CPXPARAM_TimeLimit, _time_limit);
-		if (status != 0)
-		{
-			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::solve_problem(). \nCouldn't set time limit. \nReason: " + std::string(error_text));
-		}
-
-		// Assign memory for solution
-		int numcols = CPXgetnumcols(env, problem);
-		solution_problem = std::make_unique<double[]>(CPXgetnumcols(env, problem));
-
-
-		// Optimize the problem
-		std::cout << "\n\n\nIP_model_monolithic: CPLEX is solving the problem ...\n";
-		auto start_time = std::chrono::system_clock::now();
-
-		status = CPXmipopt(env, problem);
-		if (status != 0)
-		{
-			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::solve_problem(). \nCPXmipopt failed. \nReason: " + std::string(error_text));
-		}
-
-		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time_IP = std::chrono::system_clock::now() - start_time;
-
-
-		// Get the solution
-		status = CPXsolution(env, problem, &solstat, &objval, solution_problem.get(), NULL, NULL, NULL);
-		if (status != 0)
-		{
-			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::solve_problem(). \nCPXsolution failed. \nReason: " + std::string(error_text));
-		}
-
-		char solstat_text[CPXMESSAGEBUFSIZE];
-		auto p = CPXgetstatstring(env, solstat, solstat_text);
-		if (p != nullptr)
-		{
-			std::cout << "\n\n\nDone solving ... \n\nSolution status: " << solstat_text;
-
-			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL)
-			{
-				std::cout << "\nObjval = " << objval;
-				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
-			}
-		}
-	}
-
-	void IP_model_monolithic::clear_cplex()
+	void IP_VNDS::clear_cplex()
 	{
 		int status = 0;
 		char error_text[CPXMESSAGEBUFSIZE];
@@ -805,7 +748,7 @@ namespace IVM
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::clear_cplex(). \nCouldn't free problem. \nReason: " + std::string(error_text));
+			throw std::runtime_error("Error in function IP_VNDS::clear_cplex(). \nCouldn't free problem. \nReason: " + std::string(error_text));
 		}
 
 		// Close the cplex environment
@@ -813,18 +756,322 @@ namespace IVM
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_monolithic::clear_cplex(). \nCouldn't close cplex environment. \nReason: " + std::string(error_text));
+			throw std::runtime_error("Error in function IP_VNDS::clear_cplex(). \nCouldn't close cplex environment. \nReason: " + std::string(error_text));
 		}
 	}
 
-	void IP_model_monolithic::run(const Data& data)
+
+	bool IP_VNDS::solve_subproblem(double time_limit)
 	{
-		initialize_cplex();
-		build_problem(data);
-		solve_problem(data);
-		clear_cplex();
+		char error_text[CPXMESSAGEBUFSIZE];
+		int status = 0;
+		int solstat = 0;
+		double objval;
+
+		// Set time limit (in seconds)
+		status = CPXsetdblparam(env, CPXPARAM_TimeLimit, time_limit);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_VNDS::solve_problem(). \nCouldn't set time limit. \nReason: " + std::string(error_text));
+		}
+
+		// Optimize the problem
+		std::cout << "\n\n\nCPLEX is solving the subproblem ...\n";
+		status = CPXmipopt(env, problem);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_VNDS::solve_problem(). \nCPXmipopt failed. \nReason: " + std::string(error_text));
+		}
+
+		// Get the solution info
+		status = CPXsolution(env, problem, &solstat, &objval, NULL, NULL, NULL, NULL);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			std::cout << error_text;
+			return false; // no solution exists
+		}
+
+		if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL)
+		{
+			std::cout << "\nOptimal solution found";
+			return true;
+		}
+		else if (solstat == CPXMIP_TIME_LIM_FEAS || solstat == CPXMIP_ABORT_FEAS)
+		{
+			std::cout << "\nFeasible solution found";
+			return true;
+		}
+		else
+		{
+			std::cout << "\nNo feasible solution found";
+			return false;
+		}
 	}
 
-	///////////////////////////////////////////////////////////////////////////////////////////////
+	void IP_VNDS::VNDS_initial_solution(const Data& data)
+	{
+		const int startindex_y1_vmd = 0;
+		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
+		const int startindex_x1_vmd = startindex_y2_vmd + data.vehicles() * data.nb_customers() * data.days();
+		const int startindex_x2_vmd = startindex_x1_vmd + data.vehicles() * data.nb_customers() * data.days();
+		const int startindex_w_md = startindex_x2_vmd + data.vehicles() * data.nb_customers() * data.days();
+		const int startindex_z = startindex_w_md + data.nb_customers() * data.days();
 
+		char error_text[CPXMESSAGEBUFSIZE];
+		int status = 0;
+		double obj[1];			// Objective function
+		double lb[1];			// Lower bound variables
+		double ub[1];			// Upper bound variables
+		double rhs[1];			// Right-hand side constraints
+		char sense[1];			// Sign of constraint
+		char type[1];			// Type of variable (integer, binary, fractional)
+		int nonzeroes = 0;		// To calculate number of nonzero coefficients in each constraint
+		int matbeg[1];			// Begin position of the constraint
+		int matind[1];			// Position of each element in constraint matrix
+		double matval[1];		// Value of each element in constraint matrix
+
+		int indices[1];
+		double values[1];
+
+
+		// change objective y1_vmd to 0 (y2_vmd not necessary since variables set to 0 anyway)
+		for (int v = 0; v < data.vehicles(); ++v)
+		{
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					indices[0] = startindex_y1_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;;
+					values[0] = 0; // set obj coeff = 0
+					status = CPXchgobj(env, problem, 1, indices, values);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't change objective coefficient y1_vmd. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// constraints counters
+		int original_constraints = CPXgetnumrows(env, problem);
+		int nb_constraints = original_constraints - 1; // adjust for indexing
+
+		// set y2_vmd to 0
+		for (int v = 0; v < data.vehicles(); ++v)
+		{
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'E';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// y2_vmd
+					matind[nonzeroes] = startindex_y2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = 1;
+					++nonzeroes;
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind, matval, NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "initsol_y2_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// set x2_vmd to 0
+		for (int v = 0; v < data.vehicles(); ++v)
+		{
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'E';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// x2_vmd
+					matind[nonzeroes] = startindex_x2_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;
+					matval[nonzeroes] = 1;
+					++nonzeroes;
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind, matval, NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "initsol_x2_" + std::to_string(v + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// write to file
+		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}
+
+		// solve
+		if (solve_subproblem(_time_limit_VNDS))
+		{
+			// solution found, store it
+			double objval;
+			_best_solution = std::make_unique<double[]>(CPXgetnumcols(env, problem));
+			status = CPXsolution(env, problem, NULL, &objval, _best_solution.get(), NULL, NULL, NULL);
+			if (status != 0)
+			{
+				CPXgeterrorstring(env, status, error_text);
+				throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't access solution. \nReason: " + std::string(error_text));
+			}
+
+			// calculate real objective value and store it
+			for (int v = 0; v < data.vehicles(); ++v)
+			{
+				for (int m = 0; m < data.nb_customers(); ++m)
+				{
+					for (int d = 0; d < data.days(); ++d)
+					{
+						// c_h * t1_m * y1_vmd
+						objval += data.cost_hour() * data.t_trip1(m) * _best_solution[startindex_y1_vmd + v * data.nb_customers() * data.days() + m * data.days() + d];
+
+						// y2_vmd is 0 forall v,m,d
+					}
+				}
+			}
+			_best_objval = objval;
+
+
+			// change obj coeff back
+			for (int v = 0; v < data.vehicles(); ++v)
+			{
+				for (int m = 0; m < data.nb_customers(); ++m)
+				{
+					for (int d = 0; d < data.days(); ++d)
+					{
+						indices[0] = startindex_y1_vmd + v * data.nb_customers() * data.days() + m * data.days() + d;;
+						values[0] = data.cost_hour() * data.t_trip1(m); 
+						status = CPXchgobj(env, problem, 1, indices, values);
+						if (status != 0)
+						{
+							CPXgeterrorstring(env, status, error_text);
+							throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't rechange objective coefficient y1_vmd. \nReason: " + std::string(error_text));
+						}
+					}
+				}
+			}
+
+			// delete extra constraints
+			status = CPXdelrows(env, problem, original_constraints, CPXgetnumrows(env, problem) - 1);
+
+			// write to file
+			status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+			if (status != 0)
+			{
+				CPXgeterrorstring(env, status, error_text);
+				throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+			}
+
+		}
+		else
+		{
+			// otherwise abort
+			throw std::runtime_error("Error in IP_VNDS::VNDS_initial_solution().\nCould not find initial feasible solution within time limit.");
+		}
+	}
+
+	void IP_VNDS::VNDS_neighborhood_customers(const Data& data)
+	{
+
+	}
+
+	void IP_VNDS::VNDS_neighborhood_days(const Data& data)
+	{
+
+	}
+
+	void IP_VNDS::VNDS_neighborhood_vehicles(const Data& data)
+	{
+
+	}
+
+	void IP_VNDS::VNDS_shaking(const Data& data)
+	{
+
+	}
+
+	void IP_VNDS::run(const Data& data)
+	{
+		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time;
+		auto start_time = std::chrono::system_clock::now();
+
+		initialize_cplex();
+		build_problem(data);
+
+		VNDS_initial_solution(data);
+
+		elapsed_time = std::chrono::system_clock::now() - start_time;
+		while (elapsed_time.count() < _time_limit_VNDS)
+		{
+			size_t iterations = 0;
+			while (iterations < _max_iterations_VND)
+			{
+				elapsed_time = std::chrono::system_clock::now() - start_time;
+
+				// choose neighborhood
+
+				// if improvement
+				if (true)
+					iterations = 0;
+				else
+					++iterations;
+			}
+			elapsed_time = std::chrono::system_clock::now() - start_time;
+
+
+			// if improvement
+			if (true)
+				; // save solution
+		}
+
+		// report solution
+
+
+
+		clear_cplex();
+	}
 }

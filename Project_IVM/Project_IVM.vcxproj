@@ -148,6 +148,7 @@
     </ClCompile>
     <ClCompile Include="IP_model_monolithic.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="VNDS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data.h" />
