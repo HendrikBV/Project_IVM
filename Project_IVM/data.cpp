@@ -18,9 +18,10 @@ namespace IVM
 		std::string names_variables;
 
 		// general data
+		file >> names_variables >> _name_instance;
 		file >> names_variables >> _D;
 		file >> names_variables >> _c_h;
-		file >> names_variables >> _c_vch;
+		file >> names_variables >> _c_veh;
 		file >> names_variables >> _T;
 		file >> names_variables >> _L;
 		file >> names_variables >> _max_vehicles;
@@ -50,9 +51,10 @@ namespace IVM
 	{
 		std::cout << "\n\n\n\nDATA";
 
-		std::cout << "\n\nD = " << _D;
+		std::cout << "\n\nName: " << _name_instance;
+		std::cout << "\nD = " << _D;
 		std::cout << "\nc_h = " << _c_h;
-		std::cout << "\nc_vch = " << _c_vch;
+		std::cout << "\nc_veh = " << _c_veh;
 		std::cout << "\nT = " << _T;
 		std::cout << "\nL = " << _L;
 		std::cout << "\nvehicles = " << _max_vehicles;

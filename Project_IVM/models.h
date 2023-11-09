@@ -9,23 +9,95 @@ namespace IVM
 	// forward declaration
 	class Data;
 
+	/*!
+	 *	@brief A small IP model to determine the required fleet size
+	 */
 	class IP_model_fleet_size
 	{
+		/*!
+		 *	@brief CPLEX environment pointer
+		 */
 		CPXENVptr env = nullptr;
+
+		/*!
+		 *	@brief CPLEX LP pointer
+		 */
 		CPXLPptr problem = nullptr;
 		
+		/*!
+		 *	@brief Initialize the CPLEX environment & problem
+		 */
 		void initialize_cplex();
+
+		/*!
+		 *	@brief Build the CPLEX model
+		 *  @param	data	The problem data
+		 */
 		void build_problem(const Data& data);
-		void solve_problem();
+
+		/*!
+		 *	@brief Solve the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void solve_problem(const Data& data);
+
+		/*!
+		 *	@brief Release CPLEX memory
+		 */
 		void clear_cplex();
 
 	public:
-		void run();
+		/*!
+		 *	@brief Build and solve the MIP model
+		 *  @param	data	The problem data
+		 */
+		void run(const Data& data);
 	};
 
+
+	/*!
+	 *	@brief A small IP model to determine the required fleet size
+	 */
 	class IP_model_monolithic
 	{
+		/*!
+		 *	@brief CPLEX environment pointer
+		 */
+		CPXENVptr env = nullptr;
 
+		/*!
+		 *	@brief CPLEX LP pointer
+		 */
+		CPXLPptr problem = nullptr;
+
+		/*!
+		 *	@brief Initialize the CPLEX environment & problem
+		 */
+		void initialize_cplex();
+
+		/*!
+		 *	@brief Build the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void build_problem(const Data& data);
+
+		/*!
+		 *	@brief Solve the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void solve_problem(const Data& data);
+
+		/*!
+		 *	@brief Release CPLEX memory
+		 */
+		void clear_cplex();
+
+	public:
+		/*!
+		 *	@brief Build and solve the MIP model
+		 *  @param	data	The problem data
+		 */
+		void run(const Data& data);
 	};
 
 	class IP_column_generation

@@ -74,7 +74,7 @@ namespace IVM
 		/*!
 		 *	@brief Depreciation cost of a vehicle (euro)
 		 */
-		double _c_vch;
+		double _c_veh;
 
 		/*!
 		 *	@brief Maximal number of hours available per day (h)
@@ -101,6 +101,11 @@ namespace IVM
 		 */
 		double _Wm = 3;
 
+		/*!
+		 *	@brief Name of the instance
+		 */
+		std::string _name_instance;
+
 	public:
 
 		/*!
@@ -119,6 +124,12 @@ namespace IVM
 		 *	@brief Print data to screen
 		 */
 		void print_data();
+
+		/*!
+		 *	@brief Get the number of the instance
+		 *  @returns	The number of instance
+		 */
+		const std::string& instance_name() const { return _name_instance; }
 
 		/*!
 		 *	@brief Get the number of customers
@@ -192,7 +203,7 @@ namespace IVM
 		 *	@brief Get the cost of a vehicle
 		 *  @returns	The cost of a vehicle
 		 */
-		double cost_vehicle() const { return _c_vch; }
+		double cost_vehicle() const { return _c_veh; }
 
 		/*!
 		 *	@brief Get the maximal number of hours available per day
@@ -222,7 +233,7 @@ namespace IVM
 		 *	@brief Get the max number of visits to customers
 		 *  @returns	The max number of visits to customers
 		 */
-		double vehicles() const { return _Wm; }
+		double max_visits() const { return _Wm; }
 
 	};
 }

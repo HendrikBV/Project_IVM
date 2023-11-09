@@ -1,6 +1,7 @@
+name	PMDa
 D	10
 c_h	10
-c_vch	100
+c_veh	100
 T	7.5
 L	2
 vehicles	8

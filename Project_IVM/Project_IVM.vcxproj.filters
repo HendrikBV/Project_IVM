@@ -24,6 +24,9 @@
     <ClCompile Include="IP_model_fleet_size.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IP_model_monolithic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data.h">

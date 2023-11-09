@@ -1,0 +1,14 @@
+D	2
+c_h	10
+c_vch	100
+T	100
+L	2000
+vehicles	2
+max_visists	2
+
+nb_customers	2
+
+name	t_dep	t_disp	t_disp_dep	t_unl	t_trip1	t_trip2	Q	s
+A	0.43	0.26	0.30	0.25	1.24	0.77	9.04	1.97
+B	0.24	0.49	0.30	0.25	1.28	1.23	19.23	2.22
+
