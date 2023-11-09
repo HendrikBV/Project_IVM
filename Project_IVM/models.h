@@ -4,11 +4,14 @@
 
 #include "ilcplex/cplex.h"
 #include <memory>
+#include <chrono>
 
 namespace IVM
 {
 	// forward declaration
 	class Data;
+
+
 
 	/*!
 	 *	@brief A small IP model to determine the required fleet size
@@ -162,20 +165,23 @@ namespace IVM
 		/*!
 		 *	@brief VNDS heuristic: local search using a neighborhood based on the days
 		 *  @param data		The problem data
+		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
 		 */
-		void VNDS_neighborhood_days(const Data& data);
+		double VNDS_neighborhood_days(const Data& data);
 
 		/*!
 		 *	@brief VNDS heuristic: local search using a neighborhood based on the vehicles
 		 *  @param data		The problem data
+		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
 		 */
-		void VNDS_neighborhood_vehicles(const Data& data);
+		double VNDS_neighborhood_vehicles(const Data& data);
 
 		/*!
 		 *	@brief VNDS heuristic: local search using a neighborhood based on the customers
 		 *  @param data		The problem data
+		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
 		 */
-		void VNDS_neighborhood_customers(const Data& data);
+		double VNDS_neighborhood_customers(const Data& data);
 
 		/*!
 		 *	@brief VNDS heuristic: shake phase
@@ -184,19 +190,24 @@ namespace IVM
 		void VNDS_shaking(const Data& data);
 
 		/*!
-		 *	@brief Time limit for the VNDS heuristic
+		 *	@brief The start time for the VNDS heuristic (to calculate remaining time)
 		 */
-		const double _time_limit_VNDS = 600;
+		std::chrono::system_clock::time_point _start_time;
+
+		/*!
+		 *	@brief Time limit for the VNDS heuristic (seconds)
+		 */
+		const double _time_limit_VNDS = 180;
 
 		/*!
 		 *	@brief CPLEX solve time limit for a subproblem (seconds)
 		 */
-		const double _time_limit_subproblem = 60;
+		const double _time_limit_subproblem = 30;
 
 		/*!
 		 *	@brief Maximum number of iterations without improvement during the VND (local search) phase
 		 */
-		const size_t _max_iterations_VND = 100;
+		const size_t _max_iterations_VND = 3;
 
 		/*!
 		 *	@brief Objective value of the best solution thus far
@@ -207,6 +218,16 @@ namespace IVM
 		 *	@brief The best solution thus far
 		 */
 		std::unique_ptr<double[]> _best_solution = nullptr;
+
+		/*!
+		 *	@brief The current solution
+		 */
+		std::unique_ptr<double[]> _current_solution = nullptr;
+
+		/*!
+		 *	@brief The new solution
+		 */
+		std::unique_ptr<double[]> _new_solution = nullptr;
 
 	public:
 		/*!
