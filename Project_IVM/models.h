@@ -197,17 +197,17 @@ namespace IVM
 		/*!
 		 *	@brief Time limit for the VNDS heuristic (seconds)
 		 */
-		const double _time_limit_VNDS = 180;
+		const double _time_limit_VNDS = 134;
 
 		/*!
 		 *	@brief CPLEX solve time limit for a subproblem (seconds)
 		 */
-		const double _time_limit_subproblem = 30;
+		const double _time_limit_subproblem = 20;
 
 		/*!
 		 *	@brief Maximum number of iterations without improvement during the VND (local search) phase
 		 */
-		const size_t _max_iterations_VND = 3;
+		const size_t _max_iterations_VND = 30;
 
 		/*!
 		 *	@brief Objective value of the best solution thus far

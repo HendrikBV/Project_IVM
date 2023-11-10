@@ -51,7 +51,7 @@ namespace IVM
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
 		// allocate memory
-		const size_t maxnonzeroes = std::max(data.vehicles() * data.days(), data.vehicles() * data.nb_customers()) + 100;
+		const size_t maxnonzeroes = 100000;
 		matind = std::make_unique<int[]>(maxnonzeroes);
 		matval = std::make_unique<double[]>(maxnonzeroes);
 

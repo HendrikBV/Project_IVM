@@ -63,10 +63,10 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
-		const double big_M = 50; // good value???
+		const double big_M = 3; // good value???
 
 		// allocate memory
-		const size_t maxnonzeroes = std::max(data.vehicles() * data.days(), data.vehicles() * data.nb_customers()) + 100;
+		const size_t maxnonzeroes = 100000;
 		matind = std::make_unique<int[]>(maxnonzeroes);
 		matval = std::make_unique<double[]>(maxnonzeroes);
 
@@ -1046,12 +1046,12 @@ namespace IVM
 		const int startindex_y1_vmd = 0;
 		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
 
-		std::chrono::duration<double, std::ratio<1, 1>> remaining_time;
+		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time;
 
 		// PARAM
-		std::uniform_int_distribution<int> distnbdays(2, 4);
+		std::uniform_int_distribution<int> distnbdays(3,5);
 		int neighborhood_size = distnbdays(Random::generator);
-		//std::cout << "\n\nNeighborhood Days";
+		std::cout << "\nNeighborhood Days (" << neighborhood_size << ")";
 		//std::cout << "\n\tSize: " << neighborhood_size;
 
 		// choose days
@@ -1126,20 +1126,17 @@ namespace IVM
 		}
 
 		// write to file
-		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+		/*status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
-		}
+			throw std::runtime_error("Error in function IP_VNDS::VNDS_neighborhood_days(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}*/
 
 
 
 		// solve problem
-		remaining_time = std::chrono::system_clock::now() - _start_time;
-		double time_limit = std::min(remaining_time.count(), _time_limit_subproblem);
-		
-		bool solfound = solve_subproblem(time_limit);
+		bool solfound = solve_subproblem(_time_limit_subproblem);
 		double objval;
 		if (solfound)
 		{
@@ -1149,7 +1146,7 @@ namespace IVM
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't access solution. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::VNDS_neighborhood_days(). \nCouldn't access solution. \nReason: " + std::string(error_text));
 			}
 		}
 
@@ -1157,12 +1154,12 @@ namespace IVM
 		status = CPXdelrows(env, problem, original_constraints, CPXgetnumrows(env, problem) - 1);
 
 		// write to file
-		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+		/*status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
-		}
+			throw std::runtime_error("Error in function IP_VNDS::VNDS_neighborhood_days(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}*/
 
 		// return value
 		if (solfound)
@@ -1194,12 +1191,12 @@ namespace IVM
 		const int startindex_y1_vmd = 0;
 		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
 
-		std::chrono::duration<double, std::ratio<1, 1>> remaining_time;
+		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time;
 
 		// PARAM
-		std::uniform_int_distribution<int> distnbcust(2, 4);
+		std::uniform_int_distribution<int> distnbcust(3,6);
 		int neighborhood_size = distnbcust(Random::generator);
-		//std::cout << "\n\nNeighborhood Customers";
+		std::cout << "\nNeighborhood Customers (" << neighborhood_size << ")";
 		//std::cout << "\n\tSize: " << neighborhood_size;
 
 		// choose customers
@@ -1274,20 +1271,17 @@ namespace IVM
 		}
 
 		// write to file
-		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+		/*status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
 			throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
-		}
+		}*/
 
 
 
 		// solve problem
-		remaining_time = std::chrono::system_clock::now() - _start_time;
-		double time_limit = std::min(remaining_time.count(), _time_limit_subproblem);
-
-		bool solfound = solve_subproblem(time_limit);
+		bool solfound = solve_subproblem(_time_limit_subproblem);
 		double objval;
 		if (solfound)
 		{
@@ -1305,12 +1299,12 @@ namespace IVM
 		status = CPXdelrows(env, problem, original_constraints, CPXgetnumrows(env, problem) - 1);
 
 		// write to file
-		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+		/*status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
 			throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
-		}
+		}*/
 
 		// return value
 		if (solfound)
@@ -1342,12 +1336,12 @@ namespace IVM
 		const int startindex_y1_vmd = 0;
 		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
 
-		std::chrono::duration<double, std::ratio<1, 1>> remaining_time;
+		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time;
 
 		// PARAM
-		std::uniform_int_distribution<int> distnbcust(1, 3);
+		std::uniform_int_distribution<int> distnbcust(2, 4);
 		int neighborhood_size = distnbcust(Random::generator);
-		//std::cout << "\n\nNeighborhood Vehicles";
+		std::cout << "\nNeighborhood Vehicles (" << neighborhood_size << ")";
 		//std::cout << "\n\tSize: " << neighborhood_size;
 
 		// choose customers
@@ -1422,20 +1416,17 @@ namespace IVM
 		}
 
 		// write to file
-		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+		/*status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
-		}
+			throw std::runtime_error("Error in function IP_VNDS::VNDS_neighborhood_vehicles(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}*/
 
 
 
 		// solve problem
-		remaining_time = std::chrono::system_clock::now() - _start_time;
-		double time_limit = std::min(remaining_time.count(), _time_limit_subproblem);
-
-		bool solfound = solve_subproblem(time_limit);
+		bool solfound = solve_subproblem(_time_limit_subproblem);
 		double objval;
 		if (solfound)
 		{
@@ -1445,7 +1436,7 @@ namespace IVM
 			if (status != 0)
 			{
 				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't access solution. \nReason: " + std::string(error_text));
+				throw std::runtime_error("Error in function IP_VNDS::VNDS_neighborhood_vehicles(). \nCouldn't access solution. \nReason: " + std::string(error_text));
 			}
 		}
 
@@ -1453,12 +1444,12 @@ namespace IVM
 		status = CPXdelrows(env, problem, original_constraints, CPXgetnumrows(env, problem) - 1);
 
 		// write to file
-		status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
+		/*status = CPXwriteprob(env, problem, "IP_VNDS.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_VNDS::VNDS_initial_solution(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
-		}
+			throw std::runtime_error("Error in function IP_VNDS::VNDS_neighborhood_vehicles(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}*/
 
 		// return value
 		if (solfound)
@@ -1483,12 +1474,7 @@ namespace IVM
 		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time;
 		double objval_currentsol = 1e100;
 		double objval_newsol = 1e100;
-		int neighborhood = -1;
-		int previous_neighborhood = -1;
-		std::uniform_real_distribution<> dist_neighborhood(0.0, 1.0);
-
-		// PARAM
-		const double prob_neighborhoods[3] = { 0.6, 0.2, 0.21 };  // vehicles, days, customers
+		std::uniform_int_distribution<> dist_neighborhood(1, 9);
 
 		// Time
 		_start_time = std::chrono::system_clock::now();
@@ -1496,6 +1482,9 @@ namespace IVM
 		// Initialization
 		initialize_cplex();
 		build_problem(data);
+
+		// set CPLEX relative MIP optimality tolerance
+		status = CPXsetdblparam(env, CPXPARAM_MIP_Tolerances_MIPGap, 0.01);
 
 		// Find initial feasible solution
 		std::cout << "\n\nFinding initial solution ...";
@@ -1521,22 +1510,12 @@ namespace IVM
 					break;
 
 				// choose neighborhood 
-				neighborhood = -1;
-				do {
-					double prob = dist_neighborhood(Random::generator);
-					double cumul_prob = 0;
-					while (cumul_prob < prob && neighborhood < 2) {
-						++neighborhood;
-						cumul_prob += prob_neighborhoods[neighborhood];
-					}
-					// if previously neighbourhood S or T, choose other neighbourhood
-				} while (neighborhood == previous_neighborhood);
-				previous_neighborhood = neighborhood;
+				int neighborhood = dist_neighborhood(Random::generator);
 
 				// search neighborhood
-				if (neighborhood == 0)
+				if (neighborhood <= 5 )
 					objval_newsol = VNDS_neighborhood_vehicles(data);
-				else if (neighborhood == 1)
+				else if (neighborhood <= 7)
 					objval_newsol = VNDS_neighborhood_days(data);
 				else
 					objval_newsol = VNDS_neighborhood_customers(data);
@@ -1547,7 +1526,7 @@ namespace IVM
 				// check if better solution found
 				if (objval_newsol < objval_currentsol)
 				{
-					std::cout << "\nImprovement! Current best solution: " << objval_newsol;
+					std::cout << "\nImprovement! Current best solution: " << objval_newsol << "\n";
 
 					// update objval_currentsol
 					objval_currentsol = objval_newsol;
@@ -1564,8 +1543,7 @@ namespace IVM
 					++iterations;
 				}
 			}
-			std::cout << "\n\n\nMax iterations reached. Move to shake phase ...";
-
+			
 			// if improvement
 			if (objval_currentsol < _best_objval)
 			{
@@ -1584,6 +1562,8 @@ namespace IVM
 				std::cout << "\n\n\n\nTime limit reached";
 				break;
 			}
+
+			std::cout << "\n\n\nMax iterations reached. Move to shake phase ...";
 
 			// Move to shake phase
 			VNDS_shaking(data);

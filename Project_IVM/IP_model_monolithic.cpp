@@ -52,7 +52,7 @@ namespace IVM
 		const double big_M = 50;
 
 		// allocate memory
-		const size_t maxnonzeroes = std::max(data.vehicles() * data.days(), data.vehicles() * data.nb_customers()) + 100;
+		const size_t maxnonzeroes = 100000;
 		matind = std::make_unique<int[]>(maxnonzeroes);
 		matval = std::make_unique<double[]>(maxnonzeroes);
 
