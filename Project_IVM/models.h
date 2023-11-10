@@ -5,6 +5,7 @@
 #include "ilcplex/cplex.h"
 #include <memory>
 #include <chrono>
+#include <vector>
 
 namespace IVM
 {
@@ -163,31 +164,43 @@ namespace IVM
 		void VNDS_initial_solution(const Data& data);
 
 		/*!
-		 *	@brief VNDS heuristic: local search using a neighborhood based on the days
-		 *  @param data		The problem data
-		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
-		 */
-		double VNDS_neighborhood_days(const Data& data);
-
-		/*!
 		 *	@brief VNDS heuristic: local search using a neighborhood based on the vehicles
 		 *  @param data		The problem data
+		 *  @param size		The size of the neighborhood
 		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
 		 */
-		double VNDS_neighborhood_vehicles(const Data& data);
+		double VNDS_neighborhood_vehicles(const Data& data, size_t size);
+
+		/*!
+		 *	@brief VNDS heuristic: local search using a neighborhood based on the days
+		 *  @param data		The problem data
+		 *  @param size		The size of the neighborhood
+		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
+		 */
+		double VNDS_neighborhood_days(const Data& data, size_t size);
+
+		/*!
+		 *	@brief VNDS heuristic: local search using a neighborhood based on the customers
+		 *  @param data		The problem data
+		 *  @param size		The size of the neighborhood
+		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
+		 */
+		double VNDS_neighborhood_customers(const Data& data, size_t size);
 
 		/*!
 		 *	@brief VNDS heuristic: local search using a neighborhood based on the customers
 		 *  @param data		The problem data
 		 *  @returns	The objective value of the new solution if one exists; otherwise 1e100
 		 */
-		double VNDS_neighborhood_customers(const Data& data);
+		double VNDS_neighborhood_TEST(const Data& data);
 
 		/*!
 		 *	@brief VNDS heuristic: shake phase
 		 *  @param data		The problem data
+		 *  @param objval	The objective value of the solution found by the shake phase
+		 *  @returns	True if solution found, false otherwise
 		 */
-		void VNDS_shaking(const Data& data);
+		bool VNDS_shaking(const Data& data, double& objval);
 
 		/*!
 		 *	@brief The start time for the VNDS heuristic (to calculate remaining time)
@@ -197,7 +210,7 @@ namespace IVM
 		/*!
 		 *	@brief Time limit for the VNDS heuristic (seconds)
 		 */
-		const double _time_limit_VNDS = 134;
+		const double _time_limit_VNDS = 600;
 
 		/*!
 		 *	@brief CPLEX solve time limit for a subproblem (seconds)
@@ -207,12 +220,12 @@ namespace IVM
 		/*!
 		 *	@brief Maximum number of iterations without improvement during the VND (local search) phase
 		 */
-		const size_t _max_iterations_VND = 30;
+		const size_t _max_iterations_VND = 3;
 
 		/*!
 		 *	@brief Objective value of the best solution thus far
 		 */
-		double _best_objval = 1e10;
+		double _best_objval = 1e100;
 
 		/*!
 		 *	@brief The best solution thus far

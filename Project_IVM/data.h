@@ -89,17 +89,17 @@ namespace IVM
 		/*!
 		 *	@brief Number of days in the planning horizon
 		 */
-		double _D;
+		size_t _D;
 
 		/*!
 		 *	@brief Number of available vehicles in the instance
 		 */
-		double _max_vehicles;
+		size_t _max_vehicles;
 
 		/*!
 		 *	@brief Max number of visits to customers
 		 */
-		double _Wm = 3;
+		size_t _Wm = 3;
 
 		/*!
 		 *	@brief Name of the instance
@@ -135,7 +135,7 @@ namespace IVM
 		 *	@brief Get the number of customers
 		 *  @returns	The number of customers
 		 */
-		int nb_customers() const { return _customers.size(); }
+		size_t nb_customers() const { return _customers.size(); }
 
 		/*!
 		 *	@brief Get the travel time between vehicle depot and customer for customer m
@@ -228,19 +228,19 @@ namespace IVM
 		 *	@brief Get the number of days in the planning horizon
 		 *  @returns	The number of days in the planning horizon
 		 */
-		double days() const { return _D; }
+		size_t days() const { return _D; }
 
 		/*!
 		 *	@brief Get the number of available vehicles in the instance
 		 *  @returns	The number of available vehicles in the instance
 		 */
-		double vehicles() const { return _max_vehicles; }
+		size_t vehicles() const { return _max_vehicles; }
 
 		/*!
 		 *	@brief Get the max number of visits to customers
 		 *  @returns	The max number of visits to customers
 		 */
-		double max_visits() const { return _Wm; }
+		size_t max_visits() const { return _Wm; }
 
 	};
 }

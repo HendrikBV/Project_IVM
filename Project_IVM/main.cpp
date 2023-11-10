@@ -7,7 +7,7 @@
 int main()
 {
 	IVM::Data data;
-	data.read_data("Instance1_Jens.txt");
+	data.read_data("Instance2_Jens.txt");
 	data.print_data();
 
 	IVM::IP_VNDS model;
