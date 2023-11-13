@@ -326,6 +326,17 @@ namespace IVM
 		 */
 		void add_column_to_masterproblem(const Data& data, int iteration);
 
+		/*!
+		 *	@brief Should the valid inequality (eq. 37 paper) be added to the pricing problem?
+		 */
+		bool _add_valid_inequality_pricing = false;
+
+		/*!
+		 *	@brief The big M used in the master problem and pricing problem
+		 */
+		int _big_M = 1000;
+
+
 	public:
 		/*!
 		 *	@brief Run column generation (fractional solution)

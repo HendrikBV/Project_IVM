@@ -79,8 +79,6 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
-		const double big_M = 1000;
-
 		// allocate memory
 		const size_t maxnonzeroes = 100000;
 		matind = std::make_unique<int[]>(maxnonzeroes);
@@ -232,7 +230,7 @@ namespace IVM
 
 				// w_md
 				matind[nonzeroes] = startindex_w_md + m * data.days() + d;
-				matval[nonzeroes] = -big_M;
+				matval[nonzeroes] = -_big_M;
 				++nonzeroes;
 
 				if (nonzeroes >= maxnonzeroes)
@@ -457,8 +455,6 @@ namespace IVM
 		int matbeg[1];			// Begin position of the constraint
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
-
-		const double big_M = 1000;
 
 		// allocate memory
 		const size_t maxnonzeroes = 100000;
@@ -983,7 +979,7 @@ namespace IVM
 
 				// g_md
 				matind[nonzeroes] = startindex_g_md + m * data.days() + d;
-				matval[nonzeroes] = -big_M;
+				matval[nonzeroes] = -_big_M;
 				++nonzeroes;
 
 				if (nonzeroes >= maxnonzeroes)
@@ -1101,46 +1097,49 @@ namespace IVM
 		}
 
 		// 11: (tdep_m - tdisp_m) - N*(1-y1_m) - N*(1-q2_m') <= tdep_m' - tdisp_m'   forall m1,m2 (valid inequality)   
-		for (int m1 = 0; m1 < data.nb_customers(); ++m1)
+		if(_add_valid_inequality_pricing)
 		{
-			for (int m2 = 0; m2 < data.nb_customers(); ++m2)
+			for (int m1 = 0; m1 < data.nb_customers(); ++m1)
 			{
-				++nb_constraints;
-
-				rhs[0] = data.t_dep(m2) - data.t_disp(m2) - data.t_dep(m1) + data.t_disp(m2) + 2 * big_M;
-				sense[0] = 'L';
-				matbeg[0] = 0;
-
-				nonzeroes = 0;
-
-				// y1_m
-				matind[nonzeroes] = startindex_y1_m + m1;
-				matval[nonzeroes] = big_M;
-				++nonzeroes;
-
-				// q2_m
-				matind[nonzeroes] = startindex_q2_m + m2;
-				matval[nonzeroes] = big_M;
-				++nonzeroes;
-
-
-				if (nonzeroes >= maxnonzeroes)
-					throw std::runtime_error("Error in function IP_column_generation::build_pricingproblem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
-
-				status = CPXaddrows(env, pricingproblem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
-				if (status != 0)
+				for (int m2 = 0; m2 < data.nb_customers(); ++m2)
 				{
-					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_column_generation::build_pricingproblem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
-				}
+					++nb_constraints;
 
-				// change name of constraint
-				std::string conname = "c11_" + std::to_string(m1 + 1) + "_" + std::to_string(m2 + 1);
-				status = CPXchgname(env, pricingproblem, 'r', nb_constraints, conname.c_str());
-				if (status != 0)
-				{
-					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_column_generation::build_pricingproblem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					rhs[0] = data.t_dep(m2) - data.t_disp(m2) - data.t_dep(m1) + data.t_disp(m2) + 2 * _big_M;
+					sense[0] = 'L';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// y1_m
+					matind[nonzeroes] = startindex_y1_m + m1;
+					matval[nonzeroes] = _big_M;
+					++nonzeroes;
+
+					// q2_m
+					matind[nonzeroes] = startindex_q2_m + m2;
+					matval[nonzeroes] = _big_M;
+					++nonzeroes;
+
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_column_generation::build_pricingproblem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, pricingproblem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_column_generation::build_pricingproblem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c11_" + std::to_string(m1 + 1) + "_" + std::to_string(m2 + 1);
+					status = CPXchgname(env, pricingproblem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_column_generation::build_pricingproblem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
 				}
 			}
 		}
@@ -1163,7 +1162,7 @@ namespace IVM
 
 			// q2_m
 			matind[nonzeroes] = startindex_q2_m + m;
-			matval[nonzeroes] = big_M;
+			matval[nonzeroes] = _big_M;
 			++nonzeroes;
 
 			if (nonzeroes >= maxnonzeroes)
@@ -1330,13 +1329,13 @@ namespace IVM
 
 
 		// Write the problem to a file
-		status = CPXwriteprob(env, pricingproblem, "IVM_pricingproblem.lp", NULL);
+		/*status = CPXwriteprob(env, pricingproblem, "IVM_pricingproblem.lp", NULL);
 		if (status != 0)
 		{
 			char error_text[CPXMESSAGEBUFSIZE];
 			CPXgeterrorstring(env, status, error_text);
 			throw std::runtime_error("Error in function IP_column_generation::change_coefficients_pricing_problem(). \nFailed to write the problem to a file. \nReason: " + std::string(error_text));
-		}
+		}*/
 	}
 
 	double IP_column_generation::solve_pricingproblem()
@@ -1487,13 +1486,13 @@ namespace IVM
 		}
 
 		// Write the problem to a file
-		status = CPXwriteprob(env, masterproblem, "IVM_masterproblem.lp", NULL);
+		/*status = CPXwriteprob(env, masterproblem, "IVM_masterproblem.lp", NULL);
 		if (status != 0)
 		{
 			char error_text[CPXMESSAGEBUFSIZE];
 			CPXgeterrorstring(env, status, error_text);
 			throw std::runtime_error("Error in function IP_column_generation::add_column_to_masterproblem(). \nFailed to write the problem to a file. \nReason: " + std::string(error_text));
-		}
+		}*/
 	}
 
 	void IP_column_generation::run_column_generation(const Data& data)
