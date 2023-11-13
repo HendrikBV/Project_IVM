@@ -79,7 +79,7 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
-		const double big_M = 5;
+		const double big_M = 1000;
 
 		// allocate memory
 		const size_t maxnonzeroes = 100000;
@@ -458,7 +458,7 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
-		const double big_M = 5;
+		const double big_M = 1000;
 
 		// allocate memory
 		const size_t maxnonzeroes = 100000;
