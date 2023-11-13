@@ -322,13 +322,9 @@ namespace IVM
 		/*!
 		 *	@brief Add the new column to the master problem 
 		 *  @param data		The problem data
+		 *  @param iteration	The iteration of the column generation
 		 */
-		void add_column_to_masterproblem(const Data& data);
-
-		/*!
-		 *	@brief The column generation procedure
-		 */
-		void column_generation();
+		void add_column_to_masterproblem(const Data& data, int iteration);
 
 	public:
 		/*!
