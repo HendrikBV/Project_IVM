@@ -254,7 +254,103 @@ namespace IVM
 
 	class IP_column_generation
 	{
+		/*!
+		 *	@brief CPLEX environment pointer
+		 */
+		CPXENVptr env = nullptr;
 
+		/*!
+		 *	@brief CPLEX LP pointer for master problem
+		 */
+		CPXLPptr masterproblem = nullptr;
+
+		/*!
+		 *	@brief CPLEX LP pointer for pricing problem
+		 */
+		CPXLPptr pricingproblem = nullptr;
+
+		/*!
+		 *	@brief Dual prices obtained from the master problem
+		 */
+		std::unique_ptr<double[]> _dual_prices;
+
+		/*!
+		 *	@brief Solution of the pricing problem
+		 */
+		std::unique_ptr<double[]> _solution_pricingproblem;
+
+		/*!
+		 *	@brief Initialize the CPLEX environment & problem
+		 */
+		void initialize_cplex();
+
+		/*!
+		 *	@brief Release CPLEX memory
+		 */
+		void clear_cplex();
+
+		/*!
+		 *	@brief Build the CPLEX model for the master problem
+		 *  @param	data	The problem data
+		 */
+		void build_masterproblem(const Data& data);
+
+		/*!
+		 *	@brief Build the CPLEX model for the pricing problem
+		 *  @param	data	The problem data
+		 */
+		void build_pricingproblem(const Data& data);
+
+		/*!
+		 *	@brief Solve the CPLEX model for the master problem
+		 *  @returns Objective value master
+		 */
+		double solve_masterproblem();
+
+		/*!
+		 *	@brief Solve the CPLEX model for the master problem
+		 *  @param data		The problem data
+		 */
+		void change_coefficients_pricingproblem(const Data& data);
+
+		/*!
+		 *	@brief Solve the CPLEX model for the master problem
+		 *  @returns Reduced cost
+		 */
+		double solve_pricingproblem();
+
+		/*!
+		 *	@brief Add the new column to the master problem 
+		 *  @param data		The problem data
+		 */
+		void add_column_to_masterproblem(const Data& data);
+
+		/*!
+		 *	@brief The column generation procedure
+		 */
+		void column_generation();
+
+	public:
+		/*!
+		 *	@brief Run column generation (fractional solution)
+		 *  @param	data	The problem data
+		 */
+		void run_column_generation(const Data& data);
+
+		/*!
+		 *	@brief Solve the root node of the column generation phase with integrality constraints
+		 */
+		void run_CG_MIP_heuristic();
+
+		/*!
+		 *	@brief Run a diving heuristic (heuristic branching)
+		 */
+		void run_diving_heuristic();
+
+		/*!
+		 *	@brief Run branch-and-price (optimal solution)
+		 */
+		void run_branch_and_price();
 	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
