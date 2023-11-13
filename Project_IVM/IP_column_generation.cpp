@@ -224,7 +224,10 @@ namespace IVM
 
 				// r_vk (supercolumn)
 				matind[nonzeroes] = startindex_supercolumn;
-				matval[nonzeroes] = 1; // g_kmd = 1 (assume customer visited)
+				if (d == 0)
+					matval[nonzeroes] = 1; // g_kmd = 1 (assume customer visited)
+				else
+					matval[nonzeroes] = 0;
 				++nonzeroes;
 
 				// w_md
@@ -614,7 +617,7 @@ namespace IVM
 				}
 
 				// change variable name
-				std::string varname = "q_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+				std::string varname = "g_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
 				status = CPXchgname(env, pricingproblem, 'c', startindex_g_md + m * data.days() + d, varname.c_str());
 				if (status != 0)
 				{
@@ -753,7 +756,7 @@ namespace IVM
 
 			// x2_m
 			matind[nonzeroes] = startindex_x2_m + m;
-			matval[nonzeroes] = -data.max_load();
+			matval[nonzeroes] = 1;
 			++nonzeroes;
 
 			if (nonzeroes >= maxnonzeroes)
@@ -1225,7 +1228,7 @@ namespace IVM
 		}
 
 		// write to file
-		status = CPXwriteprob(env, masterproblem, "IVM_pricingproblem.lp", NULL);
+		status = CPXwriteprob(env, pricingproblem, "IVM_pricingproblem.lp", NULL);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
@@ -1258,12 +1261,10 @@ namespace IVM
 		int status = 0;
 		const int row = -1; // objective coefficients
 
-		// lambda_m
+		// lambda_m: x1
 		for (int m = 0; m < data.nb_customers(); ++m)
 		{
 			const double newvalue = -_dual_prices[startindex_lambda_m + m];
-
-			// x1
 			const int column = startindex_x1_m + m;
 			status = CPXchgcoef(env, pricingproblem, row, column, newvalue);
 			if (status != 0)
@@ -1273,8 +1274,13 @@ namespace IVM
 				throw std::runtime_error("Error in function IP_column_generation::change_coefficients_pricing_problem(). \nCouldn't change objective function coefficient.\nReason: " + std::string(error_text));
 			}
 
-			// x2
-			const int column = startindex_x1_m + m;
+		}
+
+		// lambda_m: x2
+		for (int m = 0; m < data.nb_customers(); ++m)
+		{
+			const double newvalue = -_dual_prices[startindex_lambda_m + m];
+			const int column = startindex_x2_m + m;
 			status = CPXchgcoef(env, pricingproblem, row, column, newvalue);
 			if (status != 0)
 			{
@@ -1304,21 +1310,21 @@ namespace IVM
 		}
 
 		// tau_vd & eta_d for h_d
-		for (int v = 0; v < data.vehicles(); ++v)
+		for (int d = 0; d < data.days(); ++d)
 		{
-			for (int d = 0; d < data.days(); ++d)
-			{
-				const double newvalue = -_dual_prices[startindex_tau_vd + v*data.days() + d] - _dual_prices[startindex_eta_d + d];
+			// coefficient h_d
+			double newvalue = -_dual_prices[startindex_eta_d + d]; // eta_d
+			for (int v = 0; v < data.vehicles(); ++v)
+				newvalue -= _dual_prices[startindex_tau_vd + v * data.days() + d]; // sum(v) tau_vd
 
-				// h_d
-				const int column = startindex_h_d + d;
-				status = CPXchgcoef(env, pricingproblem, row, column, newvalue);
-				if (status != 0)
-				{
-					char error_text[CPXMESSAGEBUFSIZE];
-					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_column_generation::change_coefficients_pricing_problem(). \nCouldn't change objective function coefficient.\nReason: " + std::string(error_text));
-				}
+			// h_d
+			const int column = startindex_h_d + d;
+			status = CPXchgcoef(env, pricingproblem, row, column, newvalue);
+			if (status != 0)
+			{
+				char error_text[CPXMESSAGEBUFSIZE];
+				CPXgeterrorstring(env, status, error_text);
+				throw std::runtime_error("Error in function IP_column_generation::change_coefficients_pricing_problem(). \nCouldn't change objective function coefficient.\nReason: " + std::string(error_text));
 			}
 		}
 
@@ -1403,48 +1409,64 @@ namespace IVM
 		lb[0] = 0;
 		ub[0] = 1;
 
-		// calculate obj value
-		obj[0] = 0;
-		for (int m = 0; m < data.nb_customers(); ++m)
-		{
-			obj[0] += data.cost_hour() * data.t_trip1(m) * _solution_pricingproblem[startindex_y1_m + m];
-			obj[0] += data.cost_hour() * data.t_trip2(m) * _solution_pricingproblem[startindex_y2_m + m];
-		}
-
-		// calculate coefficients in the constraints
-		// a_km
-		for (int m = 0; m < data.nb_customers(); ++m)
-		{
-			matind[nonzeroes] = startindex_a_km + m; // row
-			matval[nonzeroes] = _solution_pricingproblem[startindex_x1_m + m] + _solution_pricingproblem[startindex_x2_m + m];
-			++nonzeroes;
-		}
-
-		// g_kmd
-		for (int m = 0; m < data.nb_customers(); ++m)
-		{
-			for (int d = 0; d < data.days(); ++d)
-			{
-				matind[nonzeroes] = startindex_g_kmd + m * data.days() + d; // row
-				matval[nonzeroes] = _solution_pricingproblem[startindex_g_md + m * data.days() + d];
-				++nonzeroes;
-			}
-		}
-
-		// h_kd
-		for (int d = 0; d < data.days(); ++d)
-		{
-			matind[nonzeroes] = startindex_h_kd + d; // row
-			matval[nonzeroes] = _solution_pricingproblem[startindex_h_d + d];
-			++nonzeroes;
-		}
-
-		if (nonzeroes >= maxnonzeroes)
-			throw std::runtime_error("Error in function IP_column_generation::add_column_to_masterproblem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
-	
-		// add the variables (same column for every vehicle)
+		// add the variables (a column for every vehicle)
 		for (int v = 0; v < data.vehicles(); ++v)
 		{
+			// reset for new variable
+			nonzeroes = 0;
+
+			// calculate obj value
+			obj[0] = 0;
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				obj[0] += data.cost_hour() * data.t_trip1(m) * _solution_pricingproblem[startindex_y1_m + m];
+				obj[0] += data.cost_hour() * data.t_trip2(m) * _solution_pricingproblem[startindex_y2_m + m];
+			}
+
+			// calculate coefficients in the constraints
+			// a_km constraint set 1
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				matind[nonzeroes] = startindex_a_km + m; // row
+				matval[nonzeroes] = _solution_pricingproblem[startindex_x1_m + m] + _solution_pricingproblem[startindex_x2_m + m];
+				++nonzeroes;
+			}
+
+			// g_kmd constraint set 2
+			for (int m = 0; m < data.nb_customers(); ++m)
+			{
+				for (int d = 0; d < data.days(); ++d)
+				{
+					matind[nonzeroes] = startindex_g_kmd + m * data.days() + d; // row
+					matval[nonzeroes] = _solution_pricingproblem[startindex_g_md + m * data.days() + d];
+					++nonzeroes;
+				}
+			}
+
+			// h_kd constraint set 4
+			for (int d = 0; d < data.days(); ++d)
+			{
+				matind[nonzeroes] = startindex_h_kd + v * data.days() + d; // row
+				matval[nonzeroes] = _solution_pricingproblem[startindex_h_d + d];
+				++nonzeroes;
+			}
+
+			// h_kd constraint set 5
+			for (int d = 0; d < data.days(); ++d)
+			{
+				matind[nonzeroes] = startindex_h_kd_bis + d; // row
+				matval[nonzeroes] = _solution_pricingproblem[startindex_h_d + d];
+				++nonzeroes;
+			}
+
+			if (nonzeroes >= maxnonzeroes)
+				throw std::runtime_error("Error in function IP_column_generation::add_column_to_masterproblem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+
+
+
+
+			// add the variable
 			status = CPXaddcols(env, masterproblem, 1, nonzeroes, obj, matbeg, matind, matval, lb, ub, NULL);
 			if (status != 0)
 			{
@@ -1453,6 +1475,7 @@ namespace IVM
 				throw std::runtime_error("Error in function IP_column_generation::add_column_to_masterproblem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
 			}
 
+			// change the variable name
 			std::string varname = "r_" + std::to_string(v+1) + "_" + std::to_string(iteration);
 			status = CPXchgname(env, masterproblem, 'c', CPXgetnumcols(env, masterproblem) - 1, varname.c_str());
 			if (status != 0)
@@ -1464,7 +1487,7 @@ namespace IVM
 		}
 
 		// Write the problem to a file
-		status = CPXwriteprob(env, masterproblem, "IVM_problem.lp", NULL);
+		status = CPXwriteprob(env, masterproblem, "IVM_masterproblem.lp", NULL);
 		if (status != 0)
 		{
 			char error_text[CPXMESSAGEBUFSIZE];
@@ -1501,6 +1524,12 @@ namespace IVM
 		}
 
 		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time = std::chrono::system_clock::now() - start_time;
+		std::cout << "\n\n\nColumn generation finished\nElapsed time (s): " << elapsed_time.count();
+
+		auto solution_master = std::make_unique<double[]>(CPXgetnumcols(env, masterproblem));
+		CPXsolution(env, masterproblem, NULL, NULL, solution_master.get(), NULL, NULL, NULL);
+		std::cout << "\nr_super = " << solution_master[1 + data.nb_customers() * data.days()];
+
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////

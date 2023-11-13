@@ -10,9 +10,9 @@ int main()
 	data.read_data("Instance2_Jens.txt");
 	data.print_data();
 
-	IVM::IP_VNDS model;
+	IVM::IP_column_generation model;
 	try {
-		model.run(data);
+		model.run_column_generation(data);
 	} 
 	catch (const std::exception& e)
 	{
