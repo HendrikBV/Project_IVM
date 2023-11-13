@@ -12,7 +12,7 @@ int main()
 
 	IVM::IP_column_generation model;
 	try {
-		model.run_column_generation(data);
+		model.run_diving_heuristic(data);
 	} 
 	catch (const std::exception& e)
 	{

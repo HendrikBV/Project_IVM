@@ -329,12 +329,48 @@ namespace IVM
 		/*!
 		 *	@brief Should the valid inequality (eq. 37 paper) be added to the pricing problem?
 		 */
-		bool _add_valid_inequality_pricing = false;
+		const bool _add_valid_inequality_pricing = true;
 
 		/*!
 		 *	@brief The big M used in the master problem and pricing problem
 		 */
-		int _big_M = 1000;
+		const int _big_M = 1000;
+
+		/*!
+		 *	@brief Solve the master problem as a MIP after column generation is finished
+		 *  @returns	The objective value of the best solution
+		 */
+		double solve_master_as_MIP();
+
+		/*!
+		 *	@brief Time limit for solving the master problem as MIP
+		 */
+		double _time_limit_MIP = 3600;
+
+		/*!
+		 *	@brief Find the branching variable
+		 *  @param data		The problem data
+		 *  @param branching_variable_index		To store the found branching variable
+		 *  @returns	Returns true if fractional solution, false if integer
+		 */
+		bool find_branching_variable_diving(const Data& data, int& branching_variable_index);
+
+		/*!
+		 *	@brief Add the branching restriction
+		 *  @param branching_variable_index		The index of the variable set to 1
+		 */
+		void add_branching_restriction_diving(int branching_variable_index);
+			
+		/*!
+		 *	@brief Remove columns that are no longer necessary after a variable is set to 1
+		 *  @param branching_variable_index		The index of the variable set to 1
+		 */
+		void remove_columns_that_violate_restriction_diving(int branching_variable_index);
+
+		/*!
+		 *	@brief Save the solution
+		 */
+		void save_solution();
 
 
 	public:
@@ -346,18 +382,21 @@ namespace IVM
 
 		/*!
 		 *	@brief Solve the root node of the column generation phase with integrality constraints
+		 *  @param	data	The problem data
 		 */
-		void run_CG_MIP_heuristic();
+		void run_CG_MIP_heuristic(const Data& data);
 
 		/*!
 		 *	@brief Run a diving heuristic (heuristic branching)
+		 *  @param	data	The problem data
 		 */
-		void run_diving_heuristic();
+		void run_diving_heuristic(const Data& data);
 
 		/*!
 		 *	@brief Run branch-and-price (optimal solution)
+		 *  @param	data	The problem data
 		 */
-		void run_branch_and_price();
+		void run_branch_and_price(const Data& data);
 	};
 
 	///////////////////////////////////////////////////////////////////////////////////////////////

@@ -50,6 +50,8 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
+		matbeg[0] = 0;
+
 		// allocate memory
 		const size_t maxnonzeroes = 100000;
 		matind = std::make_unique<int[]>(maxnonzeroes);

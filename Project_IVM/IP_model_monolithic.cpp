@@ -49,6 +49,8 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
+		matbeg[0] = 0;
+
 		const double big_M = 50;
 
 		// allocate memory

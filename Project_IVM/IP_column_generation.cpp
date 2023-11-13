@@ -79,6 +79,8 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
+		matbeg[0] = 0;
+
 		// allocate memory
 		const size_t maxnonzeroes = 100000;
 		matind = std::make_unique<int[]>(maxnonzeroes);
@@ -90,6 +92,9 @@ namespace IVM
 
 		// problem is minimization
 		status = CPXchgobjsen(env, masterproblem, CPX_MIN);
+
+		// problem is LP
+		//status = CPXchgprobtype(env, masterproblem, CPXPROB_LP);
 
 		// add variables
 		// variable z
@@ -455,6 +460,8 @@ namespace IVM
 		int matbeg[1];			// Begin position of the constraint
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
+
+		matbeg[0] = 0;
 
 		// allocate memory
 		const size_t maxnonzeroes = 100000;
@@ -1529,25 +1536,299 @@ namespace IVM
 		CPXsolution(env, masterproblem, NULL, NULL, solution_master.get(), NULL, NULL, NULL);
 		std::cout << "\nr_super = " << solution_master[1 + data.nb_customers() * data.days()];
 
+		clear_cplex();
+
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-	void IP_column_generation::run_CG_MIP_heuristic()
+	double IP_column_generation::solve_master_as_MIP()
+	{
+		char error_text[CPXMESSAGEBUFSIZE];
+
+		// change problem to MIP
+		int status = CPXchgprobtype(env, masterproblem, CPXPROB_MILP);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::solve_master_as_MIP(). \nCouldn't change problem type. \nReason: " + std::string(error_text));
+		}
+
+		// change variables to binary/integer
+		const int numcols = CPXgetnumcols(env, masterproblem);
+		std::unique_ptr<int[]> indices = std::make_unique<int[]>(numcols);
+		std::unique_ptr<char[]> vtypes = std::make_unique<char[]>(numcols);
+		for (int i = 0; i < numcols; ++i)
+		{
+			indices[i] = i;
+			vtypes[i] = 'B';
+		}
+		vtypes[0] = 'I'; // variable z (first variable)
+
+		status = CPXchgctype(env, masterproblem, numcols, indices.get(), vtypes.get());
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::solve_master_as_MIP(). \nCouldn't change variable types. \nReason: " + std::string(error_text));
+		}
+
+
+		int solstat = 0;
+		double objval;
+
+		// Set time limit (in seconds)
+		status = CPXsetdblparam(env, CPXPARAM_TimeLimit, _time_limit_MIP);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::solve_master_as_MIP(). \nCouldn't set time limit. \nReason: " + std::string(error_text));
+		}
+
+		// Turn output to screen on/off
+		status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::solve_master_as_MIP(). \nCouldn't change param SCRIND. \nReason: " + std::string(error_text));
+		}
+
+		// Optimize the problem
+		status = CPXmipopt(env, masterproblem);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::solve_master_as_MIP(). \nCPXmipopt failed. \nReason: " + std::string(error_text));
+		}
+
+		// Get the solution
+		status = CPXsolution(env, masterproblem, &solstat, &objval, NULL, NULL, NULL, NULL);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::solve_master_as_MIP(). \nCPXsolution failed. \nReason: " + std::string(error_text));
+		}
+
+		if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL)
+		{
+			// return reduced cost (objval == reduced cost)
+			return objval;
+		}
+
+
+		return 1e100;
+
+		// ... CPXMIP_TIME_LIM_FEAS?
+	}
+
+	void IP_column_generation::run_CG_MIP_heuristic(const Data& data)
+	{
+		initialize_cplex();
+		build_masterproblem(data);
+		build_pricingproblem(data);
+
+
+		auto start_time = std::chrono::system_clock::now();
+		size_t iteration = 0;
+
+		while (true)
+		{
+			++iteration;
+
+			double objval_master = solve_masterproblem();
+			std::cout << "\n\n\nIteration " << iteration << "\nMaster obj : " << objval_master;
+
+			change_coefficients_pricingproblem(data);
+
+			double reduced_cost = solve_pricingproblem();
+			std::cout << "\nReduced cost: " << reduced_cost;
+			if (reduced_cost > -0.0001) // tolerance round-off errors
+				break; // no column found, exit column generation loop
+
+			add_column_to_masterproblem(data, iteration);
+		}
+
+		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time = std::chrono::system_clock::now() - start_time;
+		std::cout << "\n\n\nColumn generation finished\nElapsed time (s): " << elapsed_time.count();
+
+		std::cout << "\n\n\nSolving the master problem as MIP ... ";
+		start_time = std::chrono::system_clock::now();
+		double objval_MIP = solve_master_as_MIP();
+		elapsed_time = std::chrono::system_clock::now() - start_time;
+		std::cout << "\n\n\nOptimal solution MIP found: " << objval_MIP;
+		std::cout << "\nElapsed time (s): " << elapsed_time.count();
+		
+
+		clear_cplex();
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	bool IP_column_generation::find_branching_variable_diving(const Data& data, int& branching_variable_index)
+	{
+		const double integrality_tolerance = 0.0001;
+		const int startindex_columns = 1 + data.nb_customers() * data.days() + 1;
+		const int numcols = CPXgetnumcols(env, masterproblem);
+
+		// get solution from master
+		auto solution = std::make_unique<double[]>(numcols);
+		double objval;
+		int solstat;
+		int status = CPXsolution(env, masterproblem, &solstat, &objval, solution.get(), NULL, NULL, NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_diving(). \nCPXsolution failed. \nReason: " + std::string(error_text));
+		}
+
+		// find largest r_vk variable (not equal to 1)
+		double highest_value = 0;
+		branching_variable_index = -1;
+		for (int i = startindex_columns; i < numcols; ++i)
+		{
+			if (solution[i] > highest_value && solution[i] < 1 - integrality_tolerance)
+			{
+				highest_value = solution[i];
+				branching_variable_index = i;
+			}
+		}
+
+		if (branching_variable_index == -1)
+			return false;
+		else
+			return true;
+	}
+
+	void IP_column_generation::add_branching_restriction_diving(int branching_variable_index)
+	{
+		int status = 0;
+		double obj[1];			// Objective function
+		double lb[1];			// Lower bound variables
+		double ub[1];			// Upper bound variables
+		double rhs[1];			// Right-hand side constraints
+		char sense[1];			// Sign of constraint
+		char type[1];			// Type of variable (integer, binary, fractional)
+		int nonzeroes = 0;		// To calculate number of nonzero coefficients in each constraint
+		int matbeg[1];			// Begin position of the constraint
+		int matind[1];			// Position of each element in constraint matrix
+		double matval[1];		// Value of each element in constraint matrix
+
+		matbeg[0] = 0;
+
+		// change r_vk to 1
+		rhs[0] = 1;
+		sense[0] = 'E';
+		matbeg[0] = 0;
+
+		nonzeroes = 0;
+
+		// r_vk
+		matind[nonzeroes] = branching_variable_index;
+		matval[nonzeroes] = 1;
+		++nonzeroes;
+
+		status = CPXaddrows(env, masterproblem, 0, 1, nonzeroes, rhs, sense, matbeg, matind, matval, NULL, NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::add_branching_restriction_diving(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+		}
+
+		// change name of constraint
+		std::string conname = "branching_restriction_var" + std::to_string(branching_variable_index);
+		status = CPXchgname(env, masterproblem, 'r', CPXgetnumrows(env, masterproblem) - 1, conname.c_str());
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::add_branching_restriction_diving(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+		}
+
+		// write to file
+		status = CPXwriteprob(env, masterproblem, "IVM_masterproblem.lp", NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::add_branching_restriction_diving(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}
+	}
+
+	void IP_column_generation::remove_columns_that_violate_restriction_diving(int branching_variable_index)
 	{
 
 	}
 
-	///////////////////////////////////////////////////////////////////////////////////////////////
-
-	void IP_column_generation::run_diving_heuristic()
+	void IP_column_generation::save_solution()
 	{
 
 	}
 
+
+	void IP_column_generation::run_diving_heuristic(const Data& data)
+	{
+		auto start_time = std::chrono::system_clock::now();
+
+		initialize_cplex();
+		build_masterproblem(data);
+		build_pricingproblem(data);
+
+		// Diving loop
+		while (true)
+		{
+			double lowerbound = 0;
+
+			// Do column generation
+			std::cout << "\n\nStarting column generation ...";
+			int iteration = 0;
+			while (true)
+			{
+				++iteration;
+
+				lowerbound = solve_masterproblem();
+
+				change_coefficients_pricingproblem(data);
+
+				double reduced_cost = solve_pricingproblem();
+				if (reduced_cost > -0.0001) // tolerance round-off errors
+					break; // no column found, exit column generation loop
+
+				add_column_to_masterproblem(data, iteration);
+			}
+
+			// Check if solution is fractional and find branching variable
+			int branching_index = -1;
+			if (find_branching_variable_diving(data, branching_index))
+			{
+				add_branching_restriction_diving(branching_index);
+				remove_columns_that_violate_restriction_diving(branching_index);
+			}
+			else
+			{
+				double objval;
+				int status = CPXgetobjval(env, masterproblem, &objval);
+				
+				save_solution();
+
+				std::cout << "\nInteger solution found!\nObjval = " << objval;
+
+				break;
+			}
+
+			// Number of rows changes each iteration
+			_dual_prices = std::make_unique<double[]>(CPXgetnumrows(env, masterproblem)); 
+		}
+
+		clear_cplex();
+
+		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time = std::chrono::system_clock::now() - start_time;
+		std::cout << "\nElapsed time (s): " << elapsed_time.count();
+	}
+
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-	void IP_column_generation::run_branch_and_price()
+	void IP_column_generation::run_branch_and_price(const Data& data)
 	{
 
 	}

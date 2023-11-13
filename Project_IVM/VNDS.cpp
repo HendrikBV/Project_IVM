@@ -63,6 +63,8 @@ namespace IVM
 		std::unique_ptr<int[]> matind; // Position of each element in constraint matrix
 		std::unique_ptr<double[]> matval; // Value of each element in constraint matrix
 
+		matbeg[0] = 0;
+
 		const double big_M = 1; // good value???
 
 		// allocate memory
@@ -847,6 +849,8 @@ namespace IVM
 		int matind[1];			// Position of each element in constraint matrix
 		double matval[1];		// Value of each element in constraint matrix
 
+		matbeg[0] = 0;
+
 		int indices[1];
 		double values[1];
 
@@ -1043,6 +1047,8 @@ namespace IVM
 		int matind[1];			// Position of each element in constraint matrix
 		double matval[1];		// Value of each element in constraint matrix
 
+		matbeg[0] = 0;
+
 		const int startindex_y1_vmd = 0;
 		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
 
@@ -1185,6 +1191,8 @@ namespace IVM
 		int matbeg[1];			// Begin position of the constraint
 		int matind[1];			// Position of each element in constraint matrix
 		double matval[1];		// Value of each element in constraint matrix
+
+		matbeg[0] = 0;
 
 		const int startindex_y1_vmd = 0;
 		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
@@ -1330,6 +1338,8 @@ namespace IVM
 		int matind[1];			// Position of each element in constraint matrix
 		double matval[1];		// Value of each element in constraint matrix
 
+		matbeg[0] = 0;
+
 		const int startindex_y1_vmd = 0;
 		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
 
@@ -1473,6 +1483,8 @@ namespace IVM
 		int matbeg[1];			// Begin position of the constraint
 		int matind[1];			// Position of each element in constraint matrix
 		double matval[1];		// Value of each element in constraint matrix
+
+		matbeg[0] = 0;
 
 		const int startindex_y1_vmd = 0;
 		const int startindex_y2_vmd = data.vehicles() * data.nb_customers() * data.days();
@@ -1633,6 +1645,8 @@ namespace IVM
 		int matbeg[1];			// Begin position of the constraint
 		int matind[1];			// Position of each element in constraint matrix
 		double matval[1];		// Value of each element in constraint matrix
+
+		matbeg[0] = 0;
 
 		int indices[1];
 		double values[1];
