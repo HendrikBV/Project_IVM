@@ -1828,8 +1828,460 @@ namespace IVM
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
+	bool IP_column_generation::find_branching_variable_bp(const Data& data, int& branching_customer, int& branching_day, double& branching_amount)
+	{
+		const double integrality_tolerance = 0.0001;
+		const int startindex_columns = 1 + data.nb_customers() * data.days() + 1;
+		const int numcols = CPXgetnumcols(env, masterproblem);
+
+		// get solution from master
+		auto solution = std::make_unique<double[]>(numcols);
+		double objval;
+		int solstat;
+		int status = CPXsolution(env, masterproblem, &solstat, &objval, solution.get(), NULL, NULL, NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp(). \nCPXsolution failed. \nReason: " + std::string(error_text));
+		}
+
+		// find r_vk closest to 0.5 
+		double best_difference = 1;
+		int branching_variable_index = -1;
+		for (int i = startindex_columns; i < numcols; ++i)
+		{
+			// fractional
+			if (solution[i] > integrality_tolerance && solution[i] < 1 - integrality_tolerance)
+			{
+				// nearest to 0.5
+				if (std::abs(solution[i] - 0.5) < best_difference)
+				{
+					best_difference = std::abs(solution[i] - 0.5);
+					branching_variable_index = i;
+				}
+			}
+		}
+
+		// if solution integer stop
+		if (branching_variable_index == -1)
+			return false; // integral solution
+
+		// find the day of the r_vk route
+		branching_day = -1;
+		const int startindex_constraint_day = data.nb_customers() + data.nb_customers() * data.days() + data.nb_customers() + data.vehicles() * data.days();
+		for (int day = 0; day < data.days(); ++day)
+		{
+			double coef = -1;
+			const int row = startindex_constraint_day + day;
+			status = CPXgetcoef(env, masterproblem, branching_variable_index, row, &coef);
+			if (status != 0)
+			{
+				char error_text[CPXMESSAGEBUFSIZE];
+				CPXgeterrorstring(env, status, error_text);
+				throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
+			}
+
+			if (std::abs(coef - 1.0) < 0.001)
+			{
+				branching_day = day;
+				break;
+			}
+		}
+		if (branching_day < 0)
+			throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp().\nBranching day not found");
+
+		
+		// find another fractional route for the same day
+		int index_second_variable = -1;
+		for (int i = startindex_columns; i < numcols; ++i)
+		{
+			// fractional and different from other column
+			if (solution[i] > integrality_tolerance && solution[i] < 1 - integrality_tolerance && i != branching_variable_index)
+			{
+				// check if for the same day
+				double coef = -1;
+				const int row = startindex_constraint_day + branching_day;
+				status = CPXgetcoef(env, masterproblem, branching_variable_index, row, &coef);
+				if (status != 0)
+				{
+					char error_text[CPXMESSAGEBUFSIZE];
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
+				}
+
+				if (std::abs(coef - 1.0) < 0.001)
+				{
+					index_second_variable = i;
+					break;
+				}
+			}
+		}
+		if(index_second_variable < 0)
+			throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp().\nNo second column found");
+
+
+		// check the values a_k'm and a_k''m, to find the customer for which there is a difference
+		for (int m = 0; m < data.nb_customers(); ++m)
+		{
+			const int row = m; // first constraint set
+
+			// first r_vk
+			double ak1m = 0;
+			status = CPXgetcoef(env, masterproblem, branching_variable_index, row, &ak1m);
+			if (status != 0)
+			{
+				char error_text[CPXMESSAGEBUFSIZE];
+				CPXgeterrorstring(env, status, error_text);
+				throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
+			}
+
+			// second r_vk
+			double ak2m = 0;
+			status = CPXgetcoef(env, masterproblem, index_second_variable, row, &ak2m);
+			if (status != 0)
+			{
+				char error_text[CPXMESSAGEBUFSIZE];
+				CPXgeterrorstring(env, status, error_text);
+				throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
+			}
+
+			// check if akm's unequal
+			if (std::abs(ak1m - ak2m) > 0.01)
+			{
+				branching_customer = m;
+				branching_amount = ak1m;
+				break;
+			}
+		}
+		if (branching_customer < 0)
+			throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp().\nNo branching customer found");
+
+
+		// fractional solution
+		return true;
+	}
+
+	void IP_column_generation::add_branching_restriction_bp(const Data& data, bool left_branch, int branching_customer, int branching_day, double branching_amount)
+	{
+		int status = 0;
+		double obj[1];			// Objective function
+		double lb[1];			// Lower bound variables
+		double ub[1];			// Upper bound variables
+		double rhs[1];			// Right-hand side constraints
+		char sense[1];			// Sign of constraint
+		char type[1];			// Type of variable (integer, binary, fractional)
+		int nonzeroes = 0;		// To calculate number of nonzero coefficients in each constraint
+		int matbeg[1];			// Begin position of the constraint
+		int matind[1];			// Position of each element in constraint matrix
+		double matval[1];		// Value of each element in constraint matrix
+
+		matbeg[0] = 0;
+
+		const int startindex_x1_m = data.nb_customers() + data.nb_customers() + data.nb_customers();
+		const int startindex_x2_m = startindex_x1_m + data.nb_customers();
+		const int startindex_h_d = startindex_x2_m + data.nb_customers() + data.nb_customers() * data.days();
+
+		if (left_branch)
+		{
+			rhs[0] = data.demand(branching_customer);
+			sense[0] = 'L';
+			matbeg[0] = 0;
+
+			nonzeroes = 0;
+
+			// x1_m
+			matind[nonzeroes] = startindex_x1_m + branching_customer;
+			matval[nonzeroes] = 1;
+			++nonzeroes;
+
+			// x2_m
+			matind[nonzeroes] = startindex_x2_m + branching_customer;
+			matval[nonzeroes] = 1;
+			++nonzeroes;
+
+			// h_d
+			matind[nonzeroes] = startindex_h_d + branching_day;
+			matval[nonzeroes] = data.demand(branching_customer) - branching_amount;
+			++nonzeroes;
+		}
+		else // right branch
+		{
+			rhs[0] = 0;
+			sense[0] = 'G';
+			matbeg[0] = 0;
+
+			nonzeroes = 0;
+
+			// x1_m
+			matind[nonzeroes] = startindex_x1_m + branching_customer;
+			matval[nonzeroes] = 1;
+			++nonzeroes;
+
+			// x2_m
+			matind[nonzeroes] = startindex_x2_m + branching_customer;
+			matval[nonzeroes] = 1;
+			++nonzeroes;
+
+			// h_d
+			const double epsilon = 0.01;
+			matind[nonzeroes] = startindex_h_d + branching_day;
+			matval[nonzeroes] = -(branching_amount + epsilon);
+			++nonzeroes;
+		}
+
+		status = CPXaddrows(env, pricingproblem, 0, 1, nonzeroes, rhs, sense, matbeg, matind, matval, NULL, NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::add_branching_restriction_bp(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+		}
+
+		// change name of constraint
+		/*std::string conname = "branching_restriction ";
+		status = CPXchgname(env, pricingproblem, 'r', CPXgetnumrows(env, pricingproblem) - 1, conname.c_str());
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::add_branching_restriction_bp(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+		}*/
+
+		// write to file
+		status = CPXwriteprob(env, pricingproblem, "IVM_pricingproblem.lp", NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::add_branching_restriction_bp(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}
+	}
+
+	void IP_column_generation::delete_branching_restriction_bp()
+	{
+		// delete restriction
+		const int numrows = CPXgetnumrows(env, pricingproblem);
+		int status = CPXdelrows(env, pricingproblem, numrows - 1, numrows - 1);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::delete_branching_restriction_bp(). \nCouldn't delete constraint. \nReason: " + std::string(error_text));
+		}
+
+		// write to file
+		status = CPXwriteprob(env, pricingproblem, "IVM_pricingproblem.lp", NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::delete_branching_restriction_bp(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}
+	}
+
+	void IP_column_generation::delete_columns_bp(const Data& data, bool left_branch, int branching_customer, int branching_day, double branching_amount)
+	{
+		const int numcols = CPXgetnumcols(env, masterproblem);
+		const int startindex_columns = 1 + data.nb_customers() * data.days() + 1;
+		const int startindex_row_akm = 0;
+		const int startindex_row_hd = data.nb_customers() + data.nb_customers() * data.days() + data.nb_customers() + data.vehicles() * data.days();
+
+		// get solution from master
+		auto solution = std::make_unique<double[]>(numcols);
+		double objval;
+		int solstat;
+		int status = CPXsolution(env, masterproblem, &solstat, &objval, solution.get(), NULL, NULL, NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in IP_column_generation::delete_columns_bp(). \nCPXsolution failed. \nReason: " + std::string(error_text));
+		}
+
+		// backwards because after delete the ranges change
+		for (int col = numcols - 1; col >= startindex_columns; --col)
+		{
+			// first check if h_d == 1 for branching_day
+			double coef_h_d = -1;
+			const int row = startindex_row_hd + branching_day;
+			status = CPXgetcoef(env, masterproblem, row, col, &coef_h_d);
+			if (status != 0)
+			{
+				char error_text[CPXMESSAGEBUFSIZE];
+				CPXgeterrorstring(env, status, error_text);
+				throw std::runtime_error("Error in function IP_column_generation::delete_columns_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
+			}
+
+			if (static_cast<int>(coef_h_d + 0.0001) == 1)
+			{
+				// then check if a_km > branching_amount (left node) or a_km < branching_amount (right node)
+				double coef_akm = -1;
+				const int row = startindex_row_akm + branching_customer;
+				status = CPXgetcoef(env, masterproblem, row, col, &coef_h_d);
+				if (status != 0)
+				{
+					char error_text[CPXMESSAGEBUFSIZE];
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_column_generation::delete_columns_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
+				}
+
+				// if both conditions met, delete the column
+				if ((left_branch && coef_akm > branching_amount + 0.000001)
+					|| (!left_branch && coef_akm < branching_amount - 0.000001))
+				{
+					status = CPXdelcols(env, masterproblem, col, col);
+					if (status != 0)
+					{
+						char error_text[CPXMESSAGEBUFSIZE];
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_column_generation::delete_columns_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
+					}
+				}
+
+			}
+		}
+
+		// write to file
+		status = CPXwriteprob(env, pricingproblem, "IVM_pricingproblem.lp", NULL);
+		if (status != 0)
+		{
+			char error_text[CPXMESSAGEBUFSIZE];
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_column_generation::delete_branching_restriction_bp(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
+		}
+	}
+
+	void IP_column_generation::restore_columns_bp()
+	{
+		// how?
+	}
+
 	void IP_column_generation::run_branch_and_price(const Data& data)
 	{
+		struct Node
+		{
+			int level_tree = 0;
+			bool left_node = true;		// if true: a_km <= a_k'm, otherwise: a_km >= a_k'm + epsilon
+			int customer = -1;
+			int day = -1;
+			double amount = -1;
+		};
+		std::vector<Node> remaining_nodes;
 
+
+		initialize_cplex();
+		build_masterproblem(data);
+		build_pricingproblem(data);
+
+
+		double obj_LP = 1e100;
+		double upperbound = 1e100;
+
+		remaining_nodes.push_back(Node()); // root node
+
+		// Branch-and-price loop
+		while (!remaining_nodes.empty())
+		{
+			const Node current_node = remaining_nodes.back();
+			remaining_nodes.pop_back();
+	
+			// Add branching restriction corresponding to node
+			if (current_node.level_tree != 0)
+			{
+				if (current_node.left_node)
+				{
+					std::cout << "\n\n\n\nExploring left node on level " << current_node.level_tree
+						<< "\nCustomer = " << current_node.customer + 1
+						<< "\nDay = " << current_node.day + 1
+						<< "\nAmount = " << current_node.amount;
+
+					add_branching_restriction_bp(data, current_node.left_node, current_node.customer, current_node.day, current_node.amount);
+					delete_columns_bp();
+				}
+				else
+				{
+					std::cout << "\n\n\n\nExploring right node on level " << current_node.level_tree
+						<< "\nCustomer = " << current_node.customer + 1
+						<< "\nDay = " << current_node.day + 1
+						<< "\nAmount = " << current_node.amount;
+
+					add_branching_restriction_bp(data, current_node.left_node, current_node.customer, current_node.day, current_node.amount);
+					delete_columns_bp();
+				}
+			}
+			else
+			{
+				std::cout << "\n\n\n\nExploring root node ";
+			}
+
+			// Do column generation
+			std::cout << "\n\nStarting column generation ...";
+			int iteration_CG = 0;
+			while (true)
+			{
+				++iteration_CG;
+
+				obj_LP = solve_masterproblem();
+
+				change_coefficients_pricingproblem(data);
+
+				double reduced_cost = solve_pricingproblem();
+				if (reduced_cost > -0.0001) // tolerance round-off errors
+					break; // no column found, exit column generation loop
+
+				add_column_to_masterproblem(data, iteration_CG);
+			}
+
+			// Check UB
+			if (obj_LP > upperbound + 0.000001)
+			{
+				// backtrack 
+				delete_branching_restriction_bp();
+				//restore_columns_bp(); some way to save the column is necessary in this case
+
+				std::cout << "\n\nLP_opt >= upperbound: backtrack ...";
+			}
+			else 
+			{
+				int branching_customer, branching_day;
+				double branching_amount;
+				if (find_branching_variable_bp(data, branching_customer, branching_day, branching_amount)) // fractional solution
+				{ 
+					std::cout << "\n\nFractional solution: branch one level further ... ";
+
+					remaining_nodes.push_back(Node());
+					remaining_nodes.back().left_node = current_node.level_tree + 1;
+					remaining_nodes.back().left_node = true;
+					remaining_nodes.back().customer = branching_customer;
+					remaining_nodes.back().day = branching_day;
+					remaining_nodes.back().amount = branching_amount;
+
+					remaining_nodes.push_back(Node());
+					remaining_nodes.back().left_node = current_node.level_tree + 1;
+					remaining_nodes.back().left_node = false;
+					remaining_nodes.back().customer = branching_customer;
+					remaining_nodes.back().day = branching_day;
+					remaining_nodes.back().amount = branching_amount;
+				}
+				else // integer solution
+				{
+					save_solution();
+					upperbound = obj_LP;
+					std::cout << "\n\nInteger solution found!\nUpperbound = " << upperbound;
+					
+					// backtrack
+					delete_branching_restriction_bp();
+					//restore_columns_bp(); some way to save the column is necessary in this case
+
+					std::cout << "\nBacktrack ...";
+				}
+			}
+
+		}
+
+
+	
+		clear_cplex();
 	}
 }

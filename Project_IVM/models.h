@@ -351,7 +351,7 @@ namespace IVM
 		 *	@brief Find the branching variable
 		 *  @param data		The problem data
 		 *  @param branching_variable_index		To store the found branching variable
-		 *  @returns	Returns true if fractional solution, false if integer
+		 *  @returns	True if fractional solution, false if integer
 		 */
 		bool find_branching_variable_diving(const Data& data, int& branching_variable_index);
 
@@ -371,6 +371,46 @@ namespace IVM
 		 *	@brief Save the solution
 		 */
 		void save_solution();
+
+		/*!
+		 *	@brief Find the branching variable
+		 *  @param data		The problem data
+		 *  @param branching_customer	The customer on which we branch
+		 *  @param branching_day		The day on which we branch
+		 *  @param branching_amount		The value of a_km 
+		 *  @returns	True if fractional solution, false if integer
+		 */
+		bool find_branching_variable_bp(const Data& data, int& branching_customer, int& branching_day, double& branching_amount);
+
+		/*!
+		 *	@brief Add the branching restriction to the pricing problem
+		 *  @param data		The problem data
+		 *  @param left_branch			True if left branch, false if right branch
+		 *  @param branching_customer	The customer on which we branch
+		 *  @param branching_day		The day on which we branch
+		 *  @param branching_amount		The value of a_km 
+		 */
+		void add_branching_restriction_bp(const Data& data, bool left_branch, int branching_customer, int branching_day, double branching_amount);
+
+		/*!
+		 *	@brief Delete the last branching restriction upon backtracking
+		 */
+		void delete_branching_restriction_bp();
+
+		/*!
+		 *	@brief Delete the columns that violate the new branching restriction from the master problem
+		 *  @param data		The problem data
+		 *  @param left_branch			True if left branch, false if right branch
+		 *  @param branching_customer	The customer on which we branch
+		 *  @param branching_day		The day on which we branch
+		 *  @param branching_amount		The value of a_km 
+		 */
+		void delete_columns_bp(const Data& data, bool left_branch, int branching_customer, int branching_day, double branching_amount);
+
+		/*!
+		 *	@brief Restore columns that were deleted with the last branching restriction to the master problem
+		 */
+		void restore_columns_bp();
 
 
 	public:
