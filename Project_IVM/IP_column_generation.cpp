@@ -1493,13 +1493,13 @@ namespace IVM
 		}
 
 		// Write the problem to a file
-		/*status = CPXwriteprob(env, masterproblem, "IVM_masterproblem.lp", NULL);
+		status = CPXwriteprob(env, masterproblem, "IVM_masterproblem.lp", NULL);
 		if (status != 0)
 		{
 			char error_text[CPXMESSAGEBUFSIZE];
 			CPXgeterrorstring(env, status, error_text);
 			throw std::runtime_error("Error in function IP_column_generation::add_column_to_masterproblem(). \nFailed to write the problem to a file. \nReason: " + std::string(error_text));
-		}*/
+		}
 	}
 
 	void IP_column_generation::run_column_generation(const Data& data)
@@ -1862,6 +1862,14 @@ namespace IVM
 				}
 			}
 		}
+		/*char varname_bvi[100];
+		int surplus_p;
+		char** colnames = new char* [1];
+		status = CPXgetcolname(env, masterproblem, colnames, varname_bvi, 100, &surplus_p, branching_variable_index, branching_variable_index);*/
+
+		// find v and k
+		int vehicle_bvi = (branching_variable_index - startindex_columns) % data.vehicles();
+		int k_bvi = (branching_variable_index - startindex_columns) / data.vehicles();
 
 		// if solution integer stop
 		if (branching_variable_index == -1)
@@ -1874,7 +1882,7 @@ namespace IVM
 		{
 			double coef = -1;
 			const int row = startindex_constraint_day + day;
-			status = CPXgetcoef(env, masterproblem, branching_variable_index, row, &coef);
+			status = CPXgetcoef(env, masterproblem, row, branching_variable_index, &coef);
 			if (status != 0)
 			{
 				char error_text[CPXMESSAGEBUFSIZE];
@@ -1882,7 +1890,7 @@ namespace IVM
 				throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
 			}
 
-			if (std::abs(coef - 1.0) < 0.001)
+			if (coef > 0.999)
 			{
 				branching_day = day;
 				break;
@@ -1892,17 +1900,21 @@ namespace IVM
 			throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp().\nBranching day not found");
 
 		
-		// find another fractional route for the same day
+		// find another fractional route for the same day (different k!)
 		int index_second_variable = -1;
 		for (int i = startindex_columns; i < numcols; ++i)
 		{
-			// fractional and different from other column
-			if (solution[i] > integrality_tolerance && solution[i] < 1 - integrality_tolerance && i != branching_variable_index)
+			// find v and k
+			int vehicle_isv = (i - startindex_columns) % data.vehicles();
+			int k_isv = (i - startindex_columns) / data.vehicles();
+
+			// fractional and different k
+			if (solution[i] > integrality_tolerance && solution[i] < 1 - integrality_tolerance && k_isv != k_bvi)
 			{
 				// check if for the same day
 				double coef = -1;
 				const int row = startindex_constraint_day + branching_day;
-				status = CPXgetcoef(env, masterproblem, branching_variable_index, row, &coef);
+				status = CPXgetcoef(env, masterproblem, row, i, &coef);
 				if (status != 0)
 				{
 					char error_text[CPXMESSAGEBUFSIZE];
@@ -1910,7 +1922,7 @@ namespace IVM
 					throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp(). \nCPXgetcoef failed. \nReason: " + std::string(error_text));
 				}
 
-				if (std::abs(coef - 1.0) < 0.001)
+				if (coef > 0.999)
 				{
 					index_second_variable = i;
 					break;
@@ -1920,15 +1932,19 @@ namespace IVM
 		if(index_second_variable < 0)
 			throw std::runtime_error("Error in function IP_column_generation::find_branching_variable_bp().\nNo second column found");
 
+		/*char varname_sbi[100];
+		status = CPXgetcolname(env, masterproblem, colnames, varname_sbi, 100, &surplus_p, index_second_variable, index_second_variable);*/
+
 
 		// check the values a_k'm and a_k''m, to find the customer for which there is a difference
+		branching_customer = -1;
 		for (int m = 0; m < data.nb_customers(); ++m)
 		{
 			const int row = m; // first constraint set
 
 			// first r_vk
 			double ak1m = 0;
-			status = CPXgetcoef(env, masterproblem, branching_variable_index, row, &ak1m);
+			status = CPXgetcoef(env, masterproblem, row, branching_variable_index, &ak1m);
 			if (status != 0)
 			{
 				char error_text[CPXMESSAGEBUFSIZE];
@@ -1938,7 +1954,7 @@ namespace IVM
 
 			// second r_vk
 			double ak2m = 0;
-			status = CPXgetcoef(env, masterproblem, index_second_variable, row, &ak2m);
+			status = CPXgetcoef(env, masterproblem, row, index_second_variable, &ak2m);
 			if (status != 0)
 			{
 				char error_text[CPXMESSAGEBUFSIZE];
@@ -1950,7 +1966,7 @@ namespace IVM
 			if (std::abs(ak1m - ak2m) > 0.01)
 			{
 				branching_customer = m;
-				branching_amount = ak1m;
+				branching_amount = std::min(ak1m, ak2m); // then do <= a_km and >= a_km + epsilon
 				break;
 			}
 		}
@@ -1973,8 +1989,8 @@ namespace IVM
 		char type[1];			// Type of variable (integer, binary, fractional)
 		int nonzeroes = 0;		// To calculate number of nonzero coefficients in each constraint
 		int matbeg[1];			// Begin position of the constraint
-		int matind[1];			// Position of each element in constraint matrix
-		double matval[1];		// Value of each element in constraint matrix
+		int matind[4];			// Position of each element in constraint matrix
+		double matval[4];		// Value of each element in constraint matrix
 
 		matbeg[0] = 0;
 
@@ -2118,7 +2134,7 @@ namespace IVM
 				// then check if a_km > branching_amount (left node) or a_km < branching_amount (right node)
 				double coef_akm = -1;
 				const int row = startindex_row_akm + branching_customer;
-				status = CPXgetcoef(env, masterproblem, row, col, &coef_h_d);
+				status = CPXgetcoef(env, masterproblem, row, col, &coef_akm);
 				if (status != 0)
 				{
 					char error_text[CPXMESSAGEBUFSIZE];
@@ -2127,8 +2143,8 @@ namespace IVM
 				}
 
 				// if both conditions met, delete the column
-				if ((left_branch && coef_akm > branching_amount + 0.000001)
-					|| (!left_branch && coef_akm < branching_amount - 0.000001))
+				if ((left_branch && coef_akm >= branching_amount + 0.001)
+					|| (!left_branch && coef_akm <= branching_amount))
 				{
 					status = CPXdelcols(env, masterproblem, col, col);
 					if (status != 0)
@@ -2169,6 +2185,8 @@ namespace IVM
 		};
 		std::vector<Node> remaining_nodes;
 
+		std::cout << "\n\n\nStarting branch and price ...";
+
 
 		initialize_cplex();
 		build_masterproblem(data);
@@ -2176,7 +2194,7 @@ namespace IVM
 
 
 		double obj_LP = 1e100;
-		double upperbound = 1e100;
+		double upperbound = 1600;
 
 		remaining_nodes.push_back(Node()); // root node
 
@@ -2197,7 +2215,7 @@ namespace IVM
 						<< "\nAmount = " << current_node.amount;
 
 					add_branching_restriction_bp(data, current_node.left_node, current_node.customer, current_node.day, current_node.amount);
-					delete_columns_bp();
+					delete_columns_bp(data, current_node.left_node, current_node.customer, current_node.day, current_node.amount);
 				}
 				else
 				{
@@ -2207,7 +2225,7 @@ namespace IVM
 						<< "\nAmount = " << current_node.amount;
 
 					add_branching_restriction_bp(data, current_node.left_node, current_node.customer, current_node.day, current_node.amount);
-					delete_columns_bp();
+					delete_columns_bp(data, current_node.left_node, current_node.customer, current_node.day, current_node.amount);
 				}
 			}
 			else
@@ -2232,6 +2250,7 @@ namespace IVM
 
 				add_column_to_masterproblem(data, iteration_CG);
 			}
+			std::cout << "\nLP opt = " << obj_LP;
 
 			// Check UB
 			if (obj_LP > upperbound + 0.000001)
@@ -2244,21 +2263,21 @@ namespace IVM
 			}
 			else 
 			{
-				int branching_customer, branching_day;
-				double branching_amount;
+				int branching_customer = -1, branching_day = -1;
+				double branching_amount = -1.0;
 				if (find_branching_variable_bp(data, branching_customer, branching_day, branching_amount)) // fractional solution
 				{ 
 					std::cout << "\n\nFractional solution: branch one level further ... ";
 
 					remaining_nodes.push_back(Node());
-					remaining_nodes.back().left_node = current_node.level_tree + 1;
+					remaining_nodes.back().level_tree = current_node.level_tree + 1;
 					remaining_nodes.back().left_node = true;
 					remaining_nodes.back().customer = branching_customer;
 					remaining_nodes.back().day = branching_day;
 					remaining_nodes.back().amount = branching_amount;
 
 					remaining_nodes.push_back(Node());
-					remaining_nodes.back().left_node = current_node.level_tree + 1;
+					remaining_nodes.back().level_tree = current_node.level_tree + 1;
 					remaining_nodes.back().left_node = false;
 					remaining_nodes.back().customer = branching_customer;
 					remaining_nodes.back().day = branching_day;
@@ -2268,7 +2287,7 @@ namespace IVM
 				{
 					save_solution();
 					upperbound = obj_LP;
-					std::cout << "\n\nInteger solution found!\nUpperbound = " << upperbound;
+					std::cout << "\n\nInteger solution found! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\nUpperbound = " << upperbound;
 					
 					// backtrack
 					delete_branching_restriction_bp();
@@ -2280,7 +2299,7 @@ namespace IVM
 
 		}
 
-
+		std::cout << "\n\n\n\nBranch-and-price finished. \nObjval optimal solution = " << upperbound;
 	
 		clear_cplex();
 	}
