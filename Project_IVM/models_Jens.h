@@ -394,8 +394,9 @@ namespace IVM
 
 		/*!
 		 *	@brief Delete the last branching restriction upon backtracking
+		 *  @param	start_num_rows	The number of rows in the pricing problem before starting the new node
 		 */
-		void delete_branching_restriction_bp();
+		void delete_branching_restrictions_bp(int start_num_rows);
 
 		/*!
 		 *	@brief Delete the columns that violate the new branching restriction from the master problem

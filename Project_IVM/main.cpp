@@ -1,5 +1,5 @@
-#include "data.h"
-#include "models.h"
+#include "data_Jens.h"
+#include "models_Jens.h"
 
 #include <iostream>
 #include <exception>
@@ -12,7 +12,7 @@ int main()
 
 	IVM::IP_column_generation model;
 	try {
-		model.run_branch_and_price(data);
+		model.run_column_generation(data);
 	} 
 	catch (const std::exception& e)
 	{

@@ -139,21 +139,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="data.cpp" />
-    <ClCompile Include="IP_column_generation.cpp" />
-    <ClCompile Include="IP_model_fleet_size.cpp">
+    <ClCompile Include="data_Jens.cpp" />
+    <ClCompile Include="IP_column_generation_Jens.cpp" />
+    <ClCompile Include="IP_model_fleet_size_Jens.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="IP_model_monolithic.cpp" />
+    <ClCompile Include="IP_model_monolithic_Jens.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="VNDS.cpp" />
+    <ClCompile Include="VNDS_Jens.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="data.h" />
-    <ClInclude Include="models.h" />
+    <ClInclude Include="data_Jens.h" />
+    <ClInclude Include="models_Jens.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

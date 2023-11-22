@@ -18,27 +18,27 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="data.cpp">
+    <ClCompile Include="data_Jens.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IP_model_fleet_size.cpp">
+    <ClCompile Include="IP_model_fleet_size_Jens.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IP_model_monolithic.cpp">
+    <ClCompile Include="IP_model_monolithic_Jens.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VNDS.cpp">
+    <ClCompile Include="VNDS_Jens.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IP_column_generation.cpp">
+    <ClCompile Include="IP_column_generation_Jens.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="data.h">
+    <ClInclude Include="data_Jens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="models.h">
+    <ClInclude Include="models_Jens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
