@@ -1,9 +1,9 @@
-#include "data_Jens.h"
+#include "data.h"
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
 
-namespace IVM_Jens
+namespace IVM
 {
 	bool Data::read_data(const std::string& filename)
 	{
@@ -19,22 +19,20 @@ namespace IVM_Jens
 
 		// general data
 		file >> names_variables >> _name_instance;
-		file >> names_variables >> _D;
-		file >> names_variables >> _c_h;
-		file >> names_variables >> _c_veh;
-		file >> names_variables >> _T;
-		file >> names_variables >> _L;
-		file >> names_variables >> _max_vehicles;
-		file >> names_variables >> _Wm;
+		file >> names_variables >> _nb_days;
+		file >> names_variables >> _nb_weeks;
+		file >> names_variables >> _max_visits_customers;
 
 		// customer data
 		int nb_customers = 0;
 		file >> names_variables >> nb_customers;
-		
+
 		file >> names_variables >> names_variables >> names_variables >> names_variables >> names_variables >> names_variables >> names_variables >> names_variables >> names_variables;
 		for (int i = 0; i < nb_customers; ++i)
 		{
 			_customers.push_back(Customer());
+
+			for(int )
 			file >> _customers.back()._name;
 			file >> _customers.back()._t_dep;
 			file >> _customers.back()._t_disp;

@@ -20,7 +20,7 @@ namespace Random
 
 
 
-namespace IVM
+namespace IVM_Jens
 {
 	///////////////////////////////////////////
 	///			Fix-and-optimize			///

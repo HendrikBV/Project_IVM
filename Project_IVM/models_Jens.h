@@ -1,13 +1,13 @@
 #pragma once
-#ifndef MODELS_H
-#define MODELS_H
+#ifndef MODELS_H_JENS
+#define MODELS_H_JENS
 
 #include "ilcplex/cplex.h"
 #include <memory>
 #include <chrono>
 #include <vector>
 
-namespace IVM
+namespace IVM_Jens
 {
 	// forward declaration
 	class Data;
@@ -448,4 +448,4 @@ namespace IVM
 	};
 }
 
-#endif // !MODELS_H
+#endif // !MODELS_H_JENS

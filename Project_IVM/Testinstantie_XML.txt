@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<Instance name="TestInstantie" nb_days="5" nb_weeks="2" max_visits="1">
+	<WasteType name="GFT"/>
+	<WasteType name="restafval"/>
+	<TruckType name="truck_GFT" maxhours="7.5" fixedcosts="100" operatingcosts="10">
+		<Capacity wastetype="GFT" cap="10"/>
+		<Capacity wastetype="restafval" cap="10"/>
+	</TruckType>
+	<TruckType name="truck_restafval" maxhours="7.5" fixedcosts="100" operatingcosts="10">
+		<Capacity wastetype="GFT" cap="0"/>
+		<Capacity wastetype="restafval" cap="10"/>
+	</TruckType>
+	<CollectionPoint name="Eeklo" unloadtime="0.2"/>
+	<CollectionPoint name="Evergem" unloadtime="0.2"/>
+	<CollectionPoint name="Deinze" unloadtime="0.2"/>
+	<Area name="A1"/>
+	<Area name="A2"/>
+	<Area name="A3"/>
+	<Area name="A4"/>
+	<Customer name="C1" currentarea="A1">
+		<Waste wastetype="GFT" demand="1" collectionspeed="0.1"/>
+		<Waste wastetype="restafval" demand="1" collectionspeed="0.1"/>
+		<ForbiddenDay day="Monday"/>
+		<CurrentPickup wastetype="GFT" day="Monday" week="1"/>
+		<CurrentPickup wastetype="restafval" day="Monday" week="2"/>
+	</Customer>
+	<TravelTime from="C1" to="C2" time="0.1"/>
+</Instance>
+

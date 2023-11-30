@@ -1,18 +1,21 @@
 #pragma once
-#ifndef DATA_H
-#define DATA_H
+#ifndef DATA_H_JENS
+#define DATA_H_JENS
 
 #include <vector>
 #include <string>
 #include <exception>
 
-namespace IVM
+namespace IVM_Jens
 {
 	/*!
 	 *	@brief Class to store input/output all data
 	 */
 	class Data
 	{
+		/*!
+		 *	@brief Struct to store data for every customer
+	     */
 		struct Customer
 		{
 			/*!
@@ -246,4 +249,4 @@ namespace IVM
 }
 
 
-#endif // !DATA_H
+#endif // !DATA_H_JENS

@@ -9,7 +9,7 @@
 
 
 
-namespace IVM
+namespace IVM_Jens
 {
 	///////////////////////////////////////////
 	///			IP Column Generation		///
