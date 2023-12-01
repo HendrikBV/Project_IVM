@@ -9,7 +9,7 @@
 int main()
 {
 	IVM::Instance instance;
-	instance.read_data("random_instance.xml");
+	instance.read_data_xml("random_instance.xml");
 
 	/*IVM::Data data;
 	data.read_data("Instance_Allocation_Test.txt");

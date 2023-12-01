@@ -35,7 +35,7 @@ namespace IVM
 		}
 	}
 
-	void IP_model_allocation::build_problem(const Data& data)
+	void IP_model_allocation::build_problem(const Instance& data)
 	{
 		char error_text[CPXMESSAGEBUFSIZE];
 		int status = 0;
@@ -65,10 +65,10 @@ namespace IVM
 		status = CPXchgobjsen(env, problem, CPX_MIN);
 
 		// data AANPASSEN NAAR VARIABELEN
-		const size_t nb_types = data.waste_types();
-		const size_t nb_customers = data.nb_customers();
-		const size_t nb_days = data.days();
-		const size_t nb_weeks = data.weeks();
+		const size_t nb_types = data.nb_waste_types();
+		const size_t nb_customers = data.nb_zones();
+		const size_t nb_days = data.nb_days();
+		const size_t nb_weeks = data.nb_weeks();
 
 		const int bigM = 10000;
 
@@ -777,7 +777,7 @@ namespace IVM
 		}
 	}
 
-	void IP_model_allocation::solve_problem(const Data& data)
+	void IP_model_allocation::solve_problem(const Instance& data)
 	{
 		char error_text[CPXMESSAGEBUFSIZE];
 		int status = 0;
@@ -847,7 +847,7 @@ namespace IVM
 		}
 	}
 
-	void IP_model_allocation::run(const Data& data)
+	void IP_model_allocation::run(const Instance& data)
 	{
 		initialize_cplex();
 		build_problem(data);

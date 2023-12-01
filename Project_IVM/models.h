@@ -10,7 +10,7 @@
 namespace IVM
 {
 	// forward declaration
-	class Data;
+	class Instance;
 
 
 
@@ -38,13 +38,13 @@ namespace IVM
 		 *	@brief Build the CPLEX model
 		 *  @param	data	The problem data
 		 */
-		void build_problem(const Data& data);
+		void build_problem(const Instance& data);
 
 		/*!
 		 *	@brief Solve the CPLEX model
 		 *  @param	data	The problem data
 		 */
-		void solve_problem(const Data& data);
+		void solve_problem(const Instance& data);
 
 		/*!
 		 *	@brief Release CPLEX memory
@@ -54,7 +54,7 @@ namespace IVM
 		/*!
 		 *	@brief The percentage of deviations that is allowed compared to the current calendar
 		 */
-		double _pct_allowed_deviations;
+		double _pct_allowed_deviations = 0.1;
 
 		/*!
 		 *	@brief The scenario (which constraints are in the model)
@@ -88,7 +88,7 @@ namespace IVM
 		 *	@brief Build and solve the MIP model
 		 *  @param	data	The problem data
 		 */
-		void run(const Data& data);
+		void run(const Instance& data);
 	};
 }
 

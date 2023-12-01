@@ -8,7 +8,7 @@
 
 namespace IVM
 {
-	void Instance::read_data(const std::string& filename)
+	void Instance::read_data_xml(const std::string& filename)
 	{
 		std::string text;
 		int status = 0;
@@ -210,6 +210,14 @@ namespace IVM
 				}
 			}
 		}
+	}
+
+	void Instance::clear_data()
+	{
+		_waste_types.clear();
+		_collection_points_unloading_times.clear();
+		_trucks.clear();
+		_zones.clear();
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
