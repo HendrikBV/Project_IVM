@@ -59,7 +59,7 @@ namespace IVM
 		/*!
 		 *	@brief The scenario (which constraints are in the model)
 		 */
-		int _scenario = FIXED_WEEK_FIXED_DAY;
+		int _scenario = 0;
 
 	public:
 		/*!

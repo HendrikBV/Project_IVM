@@ -8,7 +8,10 @@
 
 int main()
 {
-	IVM::Data data;
+	IVM::Instance instance;
+	instance.read_data("random_instance.xml");
+
+	/*IVM::Data data;
 	data.read_data("Instance_Allocation_Test.txt");
 	data.print_data();
 
@@ -18,7 +21,7 @@ int main()
 	}
 	catch (const std::exception& e) {
 		std::cout << "\n\n\n" << e.what();
-	}
+	}*/
 
 	
 

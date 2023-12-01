@@ -2,26 +2,78 @@
 #ifndef DATA_H
 #define DATA_H
 
+#include <string>
 #include <vector>
 #include <unordered_map>
-#include <string>
 #include <exception>
 
 namespace IVM
 {
+	/*!
+	 *	@brief Class to generate test instances
+	 */
+	class Instance_Generator
+	{
+		/*!
+		 *	@brief The number of zones in the instance
+		 */
+		size_t _nb_zones = 41;
+
+		/*!
+		 *	@brief The number of collection points
+		 */
+		size_t _nb_collection_points = 3;
+
+		/*!
+		 *	@brief The number of depots in the instance
+		 */
+		size_t _nb_depots = 1; ///< Kan niet veranderen?
+
+		/*!
+		 *	@brief The number of days per week in the instance
+		 */
+		size_t _nb_days = 5;
+
+		/*!
+		 *	@brief The number of weeks in the instance
+		 */
+		size_t _nb_weeks = 2;
+
+	public:
+		/*!
+		 *	@brief Change the size of the instance to be generated
+		 *  @param nb_zones	The number of zones in the instance
+		 *  @param nb_collection_points	The number of collection points in the instance
+		 *  @param nb_days	The number of days in the instance
+		 *  @param nb_weeks	The number of weeks in the instance
+		 */
+		void change_parameters(size_t nb_zones, size_t nb_collection_points, size_t nb_days, size_t nb_weeks);
+
+		/*!
+		 *	@brief Generate an instance and write it to an xml-file
+		 */
+		void generate_xml();
+	};
+
+	///////////////////////////////////////////////////////////////////////////
+
+	/*!
+	 *	@brief Class to store input/output all data
+	 */
 	class Instance
 	{
+		const std::unordered_map<std::string, int> _dag_naam_index{ {"maandag", 0}, {"dinsdag", 1}, {"woensdag", 2}, {"donderdag", 3}, {"vrijdag", 4} };
+
 		std::string _name;
 		size_t _nb_days;
 		size_t _nb_weeks;
 		size_t _max_visits;
 		std::vector<std::string> _waste_types;
-		std::vector<std::string> _truck_types;
-		std::vector<
+		std::unordered_map<std::string, double> _collection_points_unloading_times;
 
 		struct Truck
 		{
-			std::string _type;
+			std::string _name;
 			double _max_hours;
 			double _fixed_costs;
 			double _operating_costs;
@@ -29,14 +81,24 @@ namespace IVM
 		};
 		std::vector<Truck> _trucks;
 
-		struct CollectionPoint
+		struct Zone
 		{
 			std::string _name;
-			double _unloading_time;
+			std::unordered_map<std::string, double> _demands;
+			std::unordered_map<std::string, double> _collection_times;
+			std::unordered_map<std::string, int> _current_calendar_day;
+			std::unordered_map<std::string, int> _current_calendar_week;
+			std::unordered_map<std::string, double> _driving_time;
+			std::vector<int> _forbidden_days;
 		};
-		std::vector<CollectionPoint> _collection_points;
+		std::vector<Zone> _zones;
 
+	public:
+		void read_data(const std::string& filename);
+		void clear_data() {}
+		void print_data() {}
 
+		// access functions
 	};
 
 
@@ -46,10 +108,7 @@ namespace IVM
 
 
 
-
-
-
-
+#ifdef BIJVOEGEN		
 	/*!
 	 *	@brief Class to store input/output all data
 	 */
@@ -66,7 +125,7 @@ namespace IVM
 			std::string _name;
 
 			/*!
-			 *	@brief	Demand of the various types of waste to be collected at the customer. 
+			 *	@brief	Demand of the various types of waste to be collected at the customer.
 			 *			index == type of waste
 			 */
 			std::vector<double> _demands;
@@ -285,7 +344,7 @@ namespace IVM
 		 *  @param	truck_type	The index for the type of truck
 		 *  @returns	The maximum working time for a truck of type truck_type
 		 */
-		double max_working_time(size_t truck_type) const { return _truck_maxworkinghours[truck_type];	}
+		double max_working_time(size_t truck_type) const { return _truck_maxworkinghours[truck_type]; }
 
 		/*!
 		 *	@brief Get the fixed costs for a truck of a given type
@@ -346,8 +405,8 @@ namespace IVM
 		 *  @param	day		The index of the day
 		 *  @returns	True if there is a pickup on that day in the current calendar, false otherwise
 		 */
-		bool current_calendar(size_t customer, size_t waste_type, size_t week, size_t day) const 
-		{ 
+		bool current_calendar(size_t customer, size_t waste_type, size_t week, size_t day) const
+		{
 			// First index == week, second index == type of waste, third index == day
 			return _customers[customer]._current_calendar[week * _waste_types.size() * _nb_days + waste_type * _nb_days + day];
 		}
@@ -384,6 +443,8 @@ namespace IVM
 		 */
 		double time_customer_customer(size_t customer1, size_t customer2) const { return _customers[customer1]._travel_times_customers[customer2]; }
 	};
+#endif // !INCLUDE
+
 }
 
 #endif // !DATA_H
