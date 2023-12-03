@@ -66,18 +66,19 @@ namespace IVM
 
 		// data AANPASSEN NAAR VARIABELEN
 		const size_t nb_types = data.nb_waste_types();
-		const size_t nb_customers = data.nb_zones();
+		const size_t nb_zones = data.nb_zones();
 		const size_t nb_days = data.nb_days();
 		const size_t nb_weeks = data.nb_weeks();
 
 		const int bigM = 10000;
+
 
 		// add variables
 		// variable x_tmdw
 		const int startindex_x_tmdw = 0;
 		for (int t = 0; t < nb_types; ++t)
 		{
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -95,7 +96,7 @@ namespace IVM
 
 						// change variable name
 						std::string varname = "x_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-						status = CPXchgname(env, problem, 'c', startindex_x_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+						status = CPXchgname(env, problem, 'c', startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
 						if (status != 0)
 						{
 							CPXgeterrorstring(env, status, error_text);
@@ -107,10 +108,10 @@ namespace IVM
 		}
 
 		// variable y_tmdw
-		const int startindex_y_tmdw = startindex_x_tmdw + nb_types * nb_customers * nb_days * nb_weeks;
+		const int startindex_y_tmdw = startindex_x_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
 		for (int t = 0; t < nb_types; ++t)
 		{
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -130,7 +131,7 @@ namespace IVM
 
 						// change variable name
 						std::string varname = "y_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-						status = CPXchgname(env, problem, 'c', startindex_y_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+						status = CPXchgname(env, problem, 'c', startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
 						if (status != 0)
 						{
 							CPXgeterrorstring(env, status, error_text);
@@ -142,10 +143,10 @@ namespace IVM
 		}
 
 		// variable z_tmdw
-		const int startindex_z_tmdw = startindex_y_tmdw + nb_types * nb_customers * nb_days * nb_weeks;
+		const int startindex_z_tmdw = startindex_y_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
 		for (int t = 0; t < nb_types; ++t)
 		{
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -165,7 +166,7 @@ namespace IVM
 
 						// change variable name
 						std::string varname = "z_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-						status = CPXchgname(env, problem, 'c', startindex_z_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+						status = CPXchgname(env, problem, 'c', startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
 						if (status != 0)
 						{
 							CPXgeterrorstring(env, status, error_text);
@@ -177,14 +178,14 @@ namespace IVM
 		}
 
 		// variable e_tdw
-		const int startindex_e_tdw = startindex_z_tmdw + nb_types * nb_customers * nb_days * nb_weeks;
+		const int startindex_e_tdw = startindex_z_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
 		for (int t = 0; t < nb_types; ++t)
 		{
 			for (int d = 0; d < nb_days; ++d)
 			{
 				for (int w = 0; w < nb_weeks; ++w)
 				{
-					obj[0] = 0;
+					obj[0] = 1;
 					lb[0] = 0;
 
 					status = CPXnewcols(env, problem, 1, obj, lb, NULL, NULL, NULL);
@@ -196,7 +197,7 @@ namespace IVM
 
 					// change variable name
 					std::string varname = "e_" + std::to_string(t + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-					status = CPXchgname(env, problem, 'c', startindex_z_tmdw + t * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+					status = CPXchgname(env, problem, 'c', startindex_e_tdw + t * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
@@ -214,7 +215,7 @@ namespace IVM
 		// 1: x_tmdw <= N y_tmdw   forall t,m,d,w
 		for (int t = 0; t < nb_types; ++t)
 		{
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -229,12 +230,12 @@ namespace IVM
 						nonzeroes = 0;
 
 						// x_tmdw
-						matind[nonzeroes] = startindex_x_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 
 						// y_tmdw
-						matind[nonzeroes] = startindex_y_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = -bigM;
 						++nonzeroes;
 
@@ -264,11 +265,12 @@ namespace IVM
 		// 2: sum(d,w) x_tmdw == Q_tm   forall t,m
 		for (int t = 0; t < nb_types; ++t)
 		{
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				++nb_constraints;
 
-				rhs[0] = data.demand(m, t);
+				const std::string& waste_type = data.waste_type(t);
+				rhs[0] = data.demand(m, waste_type);
 				sense[0] = 'E';
 				matbeg[0] = 0;
 
@@ -279,7 +281,7 @@ namespace IVM
 				{
 					for (int w = 0; w < nb_weeks; ++w)
 					{
-						matind[nonzeroes] = startindex_x_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 					}
@@ -307,11 +309,11 @@ namespace IVM
 		}
 
 		// 3: sum(t,d,w) y_tmdw <= W   forall m
-		for (int m = 0; m < nb_customers; ++m)
+		for (int m = 0; m < nb_zones; ++m)
 		{
 			++nb_constraints;
 
-			rhs[0] = data.max_visits();
+			rhs[0] = nb_weeks * data.max_visits();
 			sense[0] = 'L';
 			matbeg[0] = 0;
 
@@ -324,7 +326,7 @@ namespace IVM
 				{
 					for (int w = 0; w < nb_weeks; ++w)
 					{
-						matind[nonzeroes] = startindex_y_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 					}
@@ -354,7 +356,7 @@ namespace IVM
 		// 4: y_tmdw - z_tmdw <= h_tmdw   forall t,m,d,w
 		for (int t = 0; t < nb_types; ++t)
 		{
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -362,19 +364,20 @@ namespace IVM
 					{
 						++nb_constraints;
 
-						rhs[0] = data.current_calendar(m, t, w, d);
+						const std::string& waste_type = data.waste_type(t);
+						rhs[0] = data.current_calendar(m, waste_type, d, w); // convert bool to int
 						sense[0] = 'L';
 						matbeg[0] = 0;
 
 						nonzeroes = 0;
 
 						// y_tmdw
-						matind[nonzeroes] = startindex_y_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 
 						// z_tmdw
-						matind[nonzeroes] = startindex_z_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = -1;
 						++nonzeroes;
 
@@ -404,7 +407,7 @@ namespace IVM
 		// 5: y_tmdw + z_tmdw >= h_tmdw   forall t,m,d,w
 		for (int t = 0; t < nb_types; ++t)
 		{
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -412,19 +415,20 @@ namespace IVM
 					{
 						++nb_constraints;
 
-						rhs[0] = data.current_calendar(m, t, w, d);
+						const std::string& waste_type = data.waste_type(t);
+						rhs[0] = data.current_calendar(m, waste_type, d, w); // convert bool to int
 						sense[0] = 'G';
 						matbeg[0] = 0;
 
 						nonzeroes = 0;
 
 						// y_tmdw
-						matind[nonzeroes] = startindex_y_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 
 						// z_tmdw
-						matind[nonzeroes] = startindex_z_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 
@@ -466,13 +470,13 @@ namespace IVM
 			// z_tmdw
 			for (int t = 0; t < nb_types; ++t)
 			{
-				for (int m = 0; m < nb_customers; ++m)
+				for (int m = 0; m < nb_zones; ++m)
 				{
 					for (int d = 0; d < nb_days; ++d)
 					{
 						for (int w = 0; w < nb_weeks; ++w)
 						{
-							matind[nonzeroes] = startindex_z_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+							matind[nonzeroes] = startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 							matval[nonzeroes] = 1;
 							++nonzeroes;
 						}
@@ -513,14 +517,18 @@ namespace IVM
 					double Atw = 0;
 					if (_scenario == FREE_WEEK_FREE_DAY)
 					{
-						for (int m = 0; m < nb_customers; ++m)
-							Atw += data.demand(m, t);
+						for (int m = 0; m < nb_zones; ++m) {
+							const std::string& waste_type = data.waste_type(t);
+							Atw += data.demand(m, waste_type);
+						}
 						Atw /= (nb_days * nb_weeks);
 					}
 					else if (std::abs(t - w) == 1)
 					{
-						for (int m = 0; m < nb_customers; ++m)
-							Atw += data.demand(m, t);
+						for (int m = 0; m < nb_zones; ++m) {
+							const std::string& waste_type = data.waste_type(t);
+							Atw += data.demand(m, waste_type);
+						}
 						Atw /= nb_days;
 					}
 					else
@@ -534,9 +542,9 @@ namespace IVM
 					nonzeroes = 0;
 
 					// x_tmdw
-					for (int m = 0; m < nb_customers; ++m)
+					for (int m = 0; m < nb_zones; ++m)
 					{
-						matind[nonzeroes] = startindex_x_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 					}
@@ -581,14 +589,18 @@ namespace IVM
 					double Atw = 0;
 					if (_scenario == FREE_WEEK_FREE_DAY)
 					{
-						for (int m = 0; m < nb_customers; ++m)
-							Atw += data.demand(m, t);
+						for (int m = 0; m < nb_zones; ++m) {
+							const std::string& waste_type = data.waste_type(t);
+							Atw += data.demand(m, waste_type);
+						}
 						Atw /= (nb_days * nb_weeks);
 					}
 					else if (std::abs(t - w) == 1)
 					{
-						for (int m = 0; m < nb_customers; ++m)
-							Atw += data.demand(m, t);
+						for (int m = 0; m < nb_zones; ++m) {
+							const std::string& waste_type = data.waste_type(t);
+							Atw += data.demand(m, waste_type);
+						}
 						Atw /= nb_days;
 					}
 					else
@@ -602,9 +614,9 @@ namespace IVM
 					nonzeroes = 0;
 
 					// x_tmdw
-					for (int m = 0; m < nb_customers; ++m)
+					for (int m = 0; m < nb_zones; ++m)
 					{
-						matind[nonzeroes] = startindex_x_tmdw + t * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 						matval[nonzeroes] = 1;
 						++nonzeroes;
 					}
@@ -640,7 +652,7 @@ namespace IVM
 		if (_scenario == FIXED_WEEK_SAME_DAY)
 		{
 			// 9. y_rest,md,1 == y_gft,md,2   forall m,d
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -652,13 +664,13 @@ namespace IVM
 
 					nonzeroes = 0;
 
-					// y_gft,md,1
-					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+					// y_gft,md,2
+					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
 					matval[nonzeroes] = 1;
 					++nonzeroes;
 
-					// y_rest,md,2
-					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+					// y_rest,md,1
+					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
 					matval[nonzeroes] = -1;
 					++nonzeroes;
 
@@ -688,7 +700,7 @@ namespace IVM
 		if (_scenario == FIXED_WEEK_SAME_DAY || _scenario == FIXED_WEEK_FREE_DAY)
 		{
 			// 10. y_rest,md,1
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -701,7 +713,7 @@ namespace IVM
 					nonzeroes = 0;
 
 					// y_rest,md,1
-					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
 					matval[nonzeroes] = 1;
 					++nonzeroes;
 
@@ -727,7 +739,7 @@ namespace IVM
 			}
 
 			// 11. y_gft,md,1
-			for (int m = 0; m < nb_customers; ++m)
+			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
 				{
@@ -740,7 +752,7 @@ namespace IVM
 					nonzeroes = 0;
 
 					// y_gft,md,1
-					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_customers * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
 					matval[nonzeroes] = 1;
 					++nonzeroes;
 

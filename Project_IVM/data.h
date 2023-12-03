@@ -196,6 +196,13 @@ namespace IVM
 		size_t nb_zones() const { return _zones.size(); }
 		size_t nb_days() const { return _nb_days; }
 		size_t nb_weeks() const { return _nb_weeks; }
+		size_t max_visits() const { return _max_visits; }
+
+		const std::string& waste_type(size_t index) const { return _waste_types[index]; }
+		double demand(int zone, const std::string& waste_type) const { return _zones[zone]._demands.at(waste_type); }
+		bool current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const;
+		size_t nb_pickups_current_calendar() const;
+
 	};
 
 

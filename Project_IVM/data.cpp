@@ -100,7 +100,7 @@ namespace IVM
 						text = truckchild->Attribute("cap");
 						cap = std::stod(text);
 
-						_trucks.back()._capacities[text] = cap;
+						_trucks.back()._capacities[afvaltype] = cap;
 					}
 				}
 			}
@@ -152,8 +152,8 @@ namespace IVM
 						text = zonechild->Attribute("collectietijd");
 						collectietijd = std::stod(text);
 
-						_zones.back()._demands[text] = hoeveelheid;
-						_zones.back()._collection_times[text] = collectietijd;
+						_zones.back()._demands[afvaltype] = hoeveelheid;
+						_zones.back()._collection_times[afvaltype] = collectietijd;
 					}
 					else if (text == "HuidigeKalender")
 					{
@@ -193,7 +193,7 @@ namespace IVM
 						text = zonechild->Attribute("tijd");
 						time = std::stod(text);
 
-						_zones.back()._driving_time[text] = time;
+						_zones.back()._driving_time[destination] = time;
 					}
 					else if (text == "VerbodenDag")
 					{
@@ -220,22 +220,29 @@ namespace IVM
 		_zones.clear();
 	}
 
-	///////////////////////////////////////////////////////////////////////////////////////////////
+	bool Instance::current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const
+	{
+		if (_zones[zone]._current_calendar_day.at(waste_type) == day
+			&& _zones[zone]._current_calendar_week.at(waste_type) == week)
+			return true;
 
-#ifdef BIJVOEGEN
-	size_t Data::nb_pickups_current_calendar() const
+		return false;
+	}
+
+	size_t Instance::nb_pickups_current_calendar() const
 	{
 		int result = 0;
 
 		for (int t = 0; t < _waste_types.size(); ++t)
 		{
-			for (int m = 0; m < _customers.size(); ++m)
+			for (int m = 0; m < _zones.size(); ++m)
 			{
 				for (int d = 0; d < _nb_days; ++d)
 				{
 					for (int w = 0; w < _nb_weeks; ++w)
 					{
-						if (current_calendar(m, t, w, d))
+						const std::string& waste_type = _waste_types[t];
+						if (current_calendar(m, waste_type, d, w))
 							++result;
 					}
 				}
@@ -244,7 +251,6 @@ namespace IVM
 
 		return result;
 	}
-#endif // BIJVOEGEN
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 

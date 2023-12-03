@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<Instantie naam="Random" aantal_dagen="5" aantal_weken="2" max_bezoeken="1">
+	<Afvaltype naam="GFT"/>
+	<Afvaltype naam="restafval"/>
+	<Trucktype naam="truck_GFT" max_uren="7.5" vaste_kosten="900" variabele_kosten="10">
+		<Capaciteit afvaltype="GFT" cap="10"/>
+		<Capaciteit afvaltype="restafval" cap="12.5"/>
+	</Trucktype>
+	<Trucktype naam="truck_restafval" max_uren="7.5" vaste_kosten="900" variabele_kosten="10">
+		<Capaciteit afvaltype="GFT" cap="0"/>
+		<Capaciteit afvaltype="restafval" cap="25"/>
+	</Trucktype>
+	<Collectiepunt naam="CP1" lostijd="0.25"/>
+	<Collectiepunt naam="CP2" lostijd="0.25"/>
+	<Collectiepunt naam="CP3" lostijd="0.25"/>
+	<Zone naam="Z1">
+		<Afval afvaltype="GFT" hoeveelheid="8" collectietijd="3.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="17" collectietijd="2.7"/>
+		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.3"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.3"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
+		<VerbodenDag dag="maandag"/>
+	</Zone>
+	<Zone naam="Z2">
+		<Afval afvaltype="GFT" hoeveelheid="6" collectietijd="3.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="23" collectietijd="2.2"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.3"/>
+		<Rijtijd naar="CP1" tijd="0.8"/>
+		<Rijtijd naar="CP2" tijd="0.3"/>
+		<Rijtijd naar="CP3" tijd="0.5"/>
+	</Zone>
+</Instantie>

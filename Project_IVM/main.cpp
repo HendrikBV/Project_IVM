@@ -1,5 +1,3 @@
-#include "data_Jens.h"
-#include "models_Jens.h"
 #include "data.h"
 #include "models.h"
 
@@ -8,12 +6,11 @@
 
 int main()
 {
-	IVM::Instance instance;
-	instance.read_data_xml("random_instance.xml");
+	/*IVM::Instance instance;
+	instance.read_data_xml("random_instance.xml");*/
 
-	/*IVM::Data data;
-	data.read_data("Instance_Allocation_Test.txt");
-	data.print_data();
+	IVM::Instance data;
+	data.read_data_xml("small_instance.xml");
 
 	IVM::IP_model_allocation model;
 	try {
@@ -21,7 +18,7 @@ int main()
 	}
 	catch (const std::exception& e) {
 		std::cout << "\n\n\n" << e.what();
-	}*/
+	}
 
 	
 
