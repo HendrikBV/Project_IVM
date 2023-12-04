@@ -10,49 +10,6 @@
 namespace IVM
 {
 	/*!
-	 *	@brief Class to generate test instances
-	 */
-	class Instance_Generator
-	{
-		/*!
-		 *	@brief The number of zones in the instance
-		 */
-		size_t _nb_zones = 41;
-
-		/*!
-		 *	@brief The number of collection points
-		 */
-		size_t _nb_collection_points = 3;
-
-		/*!
-		 *	@brief The number of days per week in the instance
-		 */
-		size_t _nb_days = 5;
-
-		/*!
-		 *	@brief The number of weeks in the instance
-		 */
-		size_t _nb_weeks = 2;
-
-	public:
-		/*!
-		 *	@brief Change the size of the instance to be generated
-		 *  @param nb_zones	The number of zones in the instance
-		 *  @param nb_collection_points	The number of collection points in the instance
-		 *  @param nb_days	The number of days in the instance
-		 *  @param nb_weeks	The number of weeks in the instance
-		 */
-		void change_parameters(size_t nb_zones, size_t nb_collection_points, size_t nb_days, size_t nb_weeks);
-
-		/*!
-		 *	@brief Generate an instance and write it to an xml-file
-		 */
-		void generate_xml();
-	};
-
-	///////////////////////////////////////////////////////////////////////////
-
-	/*!
 	 *	@brief Class to store input/output all data
 	 */
 	class Instance
@@ -88,9 +45,15 @@ namespace IVM
 		std::vector<std::string> _waste_types;
 
 		/*!
-		 *	@brief Maps the name of a collection point and the unloading time
+		 *	@brief The names of the collection points
 		 */
-		std::unordered_map<std::string, double> _collection_points_unloading_times;
+		std::vector<std::string> _collection_points;
+
+		/*!
+		 *	@brief	Stores the unloading times for the various types of waste (the same at all facilities)
+		 *			string == type of waste; double == unloading time
+		 */
+		std::unordered_map<std::string, double> _waste_type_unloading_time;
 
 		/*!
 		 *	@brief To store information on the different types of trucks
@@ -193,7 +156,9 @@ namespace IVM
 		void clear_data();
 
 		size_t nb_waste_types() const { return _waste_types.size(); }
+		size_t nb_truck_types() const { return _trucks.size(); }
 		size_t nb_zones() const { return _zones.size(); }
+		size_t nb_collection_points() const { return _collection_points_unloading_times.size(); }
 		size_t nb_days() const { return _nb_days; }
 		size_t nb_weeks() const { return _nb_weeks; }
 		size_t max_visits() const { return _max_visits; }
@@ -202,9 +167,55 @@ namespace IVM
 		double demand(int zone, const std::string& waste_type) const { return _zones[zone]._demands.at(waste_type); }
 		bool current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const;
 		size_t nb_pickups_current_calendar() const;
+		double operating_costs(size_t truck_type) const { return _trucks[truck_type]._operating_costs; }
+		double driving_time() const;
+		double time_pickup(const std::string& waste_type, size_t zone) const { return _zones[zone]._collection_times.at(waste_type); }
+		double time_unloading(const std::string& waste_type) const { return _collection_points_unloading_times}
 
 	};
 
+	///////////////////////////////////////////////////////////////////////////
+
+	/*!
+	 *	@brief Class to generate test instances
+	 */
+	class Instance_Generator
+	{
+		/*!
+		 *	@brief The number of zones in the instance
+		 */
+		size_t _nb_zones = 41;
+
+		/*!
+		 *	@brief The number of collection points
+		 */
+		size_t _nb_collection_points = 3;
+
+		/*!
+		 *	@brief The number of days per week in the instance
+		 */
+		size_t _nb_days = 5;
+
+		/*!
+		 *	@brief The number of weeks in the instance
+		 */
+		size_t _nb_weeks = 2;
+
+	public:
+		/*!
+		 *	@brief Change the size of the instance to be generated
+		 *  @param nb_zones	The number of zones in the instance
+		 *  @param nb_collection_points	The number of collection points in the instance
+		 *  @param nb_days	The number of days in the instance
+		 *  @param nb_weeks	The number of weeks in the instance
+		 */
+		void change_parameters(size_t nb_zones, size_t nb_collection_points, size_t nb_days, size_t nb_weeks);
+
+		/*!
+		 *	@brief Generate an instance and write it to an xml-file
+		 */
+		void generate_xml();
+	};
 
 }
 

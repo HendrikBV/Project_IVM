@@ -64,7 +64,7 @@ namespace IVM
 		// problem is minimization
 		status = CPXchgobjsen(env, problem, CPX_MIN);
 
-		// data AANPASSEN NAAR VARIABELEN
+		// data 
 		const size_t nb_types = data.nb_waste_types();
 		const size_t nb_zones = data.nb_zones();
 		const size_t nb_days = data.nb_days();
@@ -308,20 +308,20 @@ namespace IVM
 			}
 		}
 
-		// 3: sum(t,d,w) y_tmdw <= W   forall m
-		for (int m = 0; m < nb_zones; ++m)
+		// 3: sum(d,w) y_tmdw <= W   forall t,m
+		for (int t = 0; t < nb_types; ++t)
 		{
-			++nb_constraints;
-
-			rhs[0] = nb_weeks * data.max_visits();
-			sense[0] = 'L';
-			matbeg[0] = 0;
-
-			nonzeroes = 0;
-
-			// y_tmdw
-			for (int t = 0; t < nb_types; ++t)
+			for (int m = 0; m < nb_zones; ++m)
 			{
+				++nb_constraints;
+
+				rhs[0] = data.max_visits();
+				sense[0] = 'L';
+				matbeg[0] = 0;
+
+				nonzeroes = 0;
+
+				// y_tmdw
 				for (int d = 0; d < nb_days; ++d)
 				{
 					for (int w = 0; w < nb_weeks; ++w)
@@ -331,25 +331,25 @@ namespace IVM
 						++nonzeroes;
 					}
 				}
-			}
 
-			if (nonzeroes >= maxnonzeroes)
-				throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+				if (nonzeroes >= maxnonzeroes)
+					throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
 
-			status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
-			if (status != 0)
-			{
-				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
-			}
+				status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+				}
 
-			// change name of constraint
-			std::string conname = "c3_" + std::to_string(m + 1);
-			status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
-			if (status != 0)
-			{
-				CPXgeterrorstring(env, status, error_text);
-				throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+				// change name of constraint
+				std::string conname = "c3_" + std::to_string(t + 1) + "_" + std::to_string(m + 1);
+				status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+				}
 			}
 		}
 
@@ -459,7 +459,7 @@ namespace IVM
 		{
 			++nb_constraints;
 
-			int max_deviations = static_cast<int>(_pct_allowed_deviations * data.nb_pickups_current_calendar() + 0.1);
+			int max_deviations = static_cast<int>(_fraction_allowed_deviations * data.nb_pickups_current_calendar() + 0.1);
 
 			rhs[0] = max_deviations;
 			sense[0] = 'L';
@@ -699,7 +699,7 @@ namespace IVM
 		// Enkel indien scenario van toepassing is
 		if (_scenario == FIXED_WEEK_SAME_DAY || _scenario == FIXED_WEEK_FREE_DAY)
 		{
-			// 10. y_rest,md,1
+			// 10. y_rest,md,2
 			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
@@ -713,7 +713,7 @@ namespace IVM
 					nonzeroes = 0;
 
 					// y_rest,md,1
-					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
 					matval[nonzeroes] = 1;
 					++nonzeroes;
 
@@ -752,7 +752,7 @@ namespace IVM
 					nonzeroes = 0;
 
 					// y_gft,md,1
-					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
 					matval[nonzeroes] = 1;
 					++nonzeroes;
 
@@ -835,6 +835,8 @@ namespace IVM
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
 			}
 		}
+
+
 	}
 
 	void IP_model_allocation::clear_cplex()

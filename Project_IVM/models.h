@@ -6,6 +6,7 @@
 #include <memory>
 #include <chrono>
 #include <vector>
+#include <unordered_map>
 
 namespace IVM
 {
@@ -52,9 +53,10 @@ namespace IVM
 		void clear_cplex();
 
 		/*!
-		 *	@brief The percentage of deviations that is allowed compared to the current calendar
+		 *	@brief	The fraction of deviations that is allowed compared to the current calendar
+		 *			Value should be between 0 and 1
 		 */
-		double _pct_allowed_deviations = 0.1;
+		double _fraction_allowed_deviations = 0.1;
 
 		/*!
 		 *	@brief The scenario (which constraints are in the model)
@@ -63,10 +65,10 @@ namespace IVM
 
 	public:
 		/*!
-		 *	@brief Set the percentage of deviations that is allowed compared to the current calendar
-		 *  @param	pct	The percentage of deviations that is allowed
+		 *	@brief Set the fraction of deviations that is allowed compared to the current calendar
+		 *  @param	fraction	The fraction of deviations that is allowed (between 0 and 1)
 		 */
-		void set_pct_allowed_deviations(double pct) { _pct_allowed_deviations = pct; }
+		void set_fraction_allowed_deviations(double fraction) { _fraction_allowed_deviations = fraction; }
 
 		/*!
 		 *	@brief The possible scenarios
@@ -89,6 +91,57 @@ namespace IVM
 		 *  @param	data	The problem data
 		 */
 		void run(const Instance& data);
+	};
+
+	///////////////////////////////////////////////////////////////////////////
+
+	class IP_model_routing
+	{
+		/*!
+		 *	@brief CPLEX environment pointer
+		 */
+		CPXENVptr env = nullptr;
+
+		/*!
+		 *	@brief CPLEX LP pointer
+		 */
+		CPXLPptr problem = nullptr;
+
+		/*!
+		 *	@brief Initialize the CPLEX environment & problem
+		 */
+		void initialize_cplex();
+
+		/*!
+		 *	@brief Build the CPLEX model
+		 *  @param	data	The problem data
+		 *  @param	day		The day for which to build the routing problem
+		 */
+		void build_problem(const Instance& data, size_t day);
+
+		/*!
+		 *	@brief Solve the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void solve_problem(const Instance& data);
+
+		/*!
+		 *	@brief Release CPLEX memory
+		 */
+		void clear_cplex();
+
+		/*!
+		 *	@brief The available number of trucks
+		 */
+		const size_t _max_nb_trucks = 10;
+
+	public:
+		/*!
+		 *	@brief Build and solve the CPLEX model
+		 *  @param	data	The problem data
+		 *  @param	day		The day for which to build the routing problem
+		 */
+		void run(const Instance& data, size_t day);
 	};
 }
 

@@ -55,9 +55,20 @@ namespace IVM
 			text = child->Value();
 			if (text == "Afvaltype")
 			{
+				std::string waste_type;
+				double lostijd;
+
 				if(child->Attribute("naam") == nullptr)
 					throw std::runtime_error("Error in function Instance::read_data(). Afvaltype does not contain an attribute \"naam\"");
-				_waste_types.push_back(child->Attribute("naam"));
+				waste_type = child->Attribute("naam");
+
+				if(child->Attribute("lostijd") == nullptr)
+					throw std::runtime_error("Error in function Instance::read_data(). Afvaltype does not contain an attribute \"lostijd\"");
+				text = child->Attribute("lostijd");
+				lostijd = std::stod(text);
+
+				_waste_types.push_back(waste_type);
+				_waste_type_unloading_time[waste_type] = lostijd;
 			}
 			else if (text == "Trucktype")
 			{
@@ -112,13 +123,8 @@ namespace IVM
 				if (child->Attribute("naam") == nullptr)
 					throw std::runtime_error("Error in function Instance::read_data(). Collectiepunt does not contain an attribute \"naam\"");
 				naamc = child->Attribute("naam");
-				
-				if (child->Attribute("lostijd") == nullptr)
-					throw std::runtime_error("Error in function Instance::read_data(). Collectiepunt does not contain an attribute \"lostijd\"");
-				text = child->Attribute("lostijd");
-				lostijd = std::stod(text);
 
-				_collection_points_unloading_times[naamc] = lostijd;
+				_collection_points.push_back(naamc);
 			}
 			else if (text == "Zone")
 			{
@@ -290,7 +296,7 @@ namespace IVM
 		}
 
 		file << "<?xml version=\"1.0\"?>\n<Instantie naam=\"Random\" aantal_dagen=\"" << _nb_days << "\" aantal_weken=\"" << _nb_weeks << "\" max_bezoeken=\"" << max_visits << "\">"
-			<< "\n\t<Afvaltype naam=\"GFT\"/>\n\t<Afvaltype naam=\"restafval\"/>"
+			<< "\n\t<Afvaltype naam=\"GFT\" lostijd=\"0.25\"/>\n\t<Afvaltype naam=\"restafval\" lostijd=\"0.25\"/>"
 			<< "\n\t<Trucktype naam=\"truck_GFT\" max_uren=\"" << max_time << "\" vaste_kosten=\"" << fixedcosts << "\" variabele_kosten=\"" << operatingcosts << "\">"
 			<< "\n\t\t<Capaciteit afvaltype=\"GFT\" cap=\"" << capacity_truckgft_gft << "\"/>"
 			<< "\n\t\t<Capaciteit afvaltype=\"restafval\" cap=\"" << capacity_truckgft_rest << "\"/>"
@@ -303,14 +309,14 @@ namespace IVM
 		// Collection Points
 		for (int i = 0; i < _nb_collection_points; ++i)
 		{
-			file << "\n\t<Collectiepunt naam=\"CP" << i+1 << "\" lostijd=\"" << unloading_time << "\"/>";
+			file << "\n\t<Collectiepunt naam=\"CP" << i+1 << "\"/>";
 		}
 
 		// Customers (Zones)
 		for (int i = 0; i < _nb_zones; ++i)
 		{
-			int demand_gft = dist_demand_gft(engine);
-			int demand_restafval = dist_demand_rest(engine);
+			double demand_gft = static_cast<double>(dist_demand_gft(engine)) / 10.0;
+			double demand_restafval = static_cast<double>(dist_demand_rest(engine)) / 10.0;
 			double collectiontimerest = static_cast<double>(dist_collection_time(engine)) / 10.0;
 			double collectiontimegft = static_cast<double>(dist_collection_time(engine)) / 5.0;
 			int current_day = dist_day(engine);
