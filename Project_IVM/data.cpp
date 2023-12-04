@@ -221,7 +221,8 @@ namespace IVM
 	void Instance::clear_data()
 	{
 		_waste_types.clear();
-		_collection_points_unloading_times.clear();
+		_waste_type_unloading_time.clear();
+		_collection_points.clear();
 		_trucks.clear();
 		_zones.clear();
 	}
@@ -322,8 +323,8 @@ namespace IVM
 			int current_day = dist_day(engine);
 
 			file << "\n\t<Zone naam=\"Z" << i + 1 << "\">"
-				<< "\n\t\t<Afval afval_type=\"GFT\" hoeveelheid=\"" << demand_gft << "\" collectietijd=\"" << collectiontimegft << "\"/>"
-				<< "\n\t\t<Afval afval_type=\"restafval\" hoeveelheid=\"" << demand_restafval << "\" collectietijd=\"" << collectiontimerest << "\"/>"
+				<< "\n\t\t<Afval afvaltype=\"GFT\" hoeveelheid=\"" << demand_gft << "\" collectietijd=\"" << collectiontimegft << "\"/>"
+				<< "\n\t\t<Afval afvaltype=\"restafval\" hoeveelheid=\"" << demand_restafval << "\" collectietijd=\"" << collectiontimerest << "\"/>"
 				<< "\n\t\t<HuidigeKalender afvaltype=\"restafval\" dag=\"" << day_names[current_day] << "\" week=\"1\"/>"
 				<< "\n\t\t<HuidigeKalender afvaltype=\"GFT\" dag=\"" << day_names[current_day] << "\" week=\"2\"/>";
 

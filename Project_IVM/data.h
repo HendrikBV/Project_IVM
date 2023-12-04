@@ -158,20 +158,25 @@ namespace IVM
 		size_t nb_waste_types() const { return _waste_types.size(); }
 		size_t nb_truck_types() const { return _trucks.size(); }
 		size_t nb_zones() const { return _zones.size(); }
-		size_t nb_collection_points() const { return _collection_points_unloading_times.size(); }
+		size_t nb_collection_points() const { return _collection_points.size(); }
 		size_t nb_days() const { return _nb_days; }
 		size_t nb_weeks() const { return _nb_weeks; }
 		size_t max_visits() const { return _max_visits; }
 
 		const std::string& waste_type(size_t index) const { return _waste_types[index]; }
+		const std::string& zone_name(size_t index) const { return _zones[index]._name; }
+		const std::string& truck_type(size_t index) const { return _trucks[index]._name; }
+		const std::string& collection_point(size_t index) const { return _collection_points[index]; }
 		double demand(int zone, const std::string& waste_type) const { return _zones[zone]._demands.at(waste_type); }
 		bool current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const;
 		size_t nb_pickups_current_calendar() const;
 		double operating_costs(size_t truck_type) const { return _trucks[truck_type]._operating_costs; }
-		double driving_time() const;
-		double time_pickup(const std::string& waste_type, size_t zone) const { return _zones[zone]._collection_times.at(waste_type); }
-		double time_unloading(const std::string& waste_type) const { return _collection_points_unloading_times}
-
+		double time_driving_zone_collectionpoint(size_t zone, const std::string& collection_point) const { return _zones[zone]._driving_time.at(collection_point); }
+		double time_driving_zone_depot(size_t zone) const { return _zones[zone]._driving_time.at("Depot"); }
+		double time_pickup(size_t zone, const std::string& waste_type) const { return _zones[zone]._collection_times.at(waste_type); }
+		double time_unloading(const std::string& waste_type) const { return _waste_type_unloading_time.at(waste_type); }
+		double max_driving_time(size_t truck_type) const { return _trucks[truck_type]._max_hours; }
+		double capacity(size_t truck_type, const std::string& waste_type) const { return _trucks[truck_type]._capacities.at(waste_type); }
 	};
 
 	///////////////////////////////////////////////////////////////////////////

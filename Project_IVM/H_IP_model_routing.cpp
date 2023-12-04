@@ -246,6 +246,142 @@ namespace IVM
 		int nb_constraints = -1;
 
 		// 1: beta_qv - sum(i,j) tau_D_ij*x_qvij - sum(m) tau_P_m*w_tqvm - tau_U_t*y_tqv == 0   forall t,q,v
+		for (int q = 0; q < nb_truck_types; ++q)
+		{
+			for (int v = 0; v < _max_nb_trucks; ++v)
+			{
+				++nb_constraints;
+
+				rhs[0] = 0;
+				sense[0] = 'E';
+				matbeg[0] = 0;
+
+				nonzeroes = 0;
+
+				// beta_qv
+				matind[nonzeroes] = startindex_beta_qv + q * _max_nb_trucks + v;
+				matval[nonzeroes] = 1;
+				++nonzeroes;
+
+				// -sum(i,j) tau_D_ij* x_qvij
+				for (int t = 0; t < nb_waste_types; ++t)
+				{
+					for (int i = 0; i < nb_locations; ++i)
+					{
+						for (int j = 0; j < nb_locations; ++j)
+						{
+							const int index_var = startindex_x_tqvij + t * nb_truck_types * _max_nb_trucks * nb_locations * nb_locations + q * _max_nb_trucks * nb_locations * nb_locations
+								+ v * nb_locations * nb_locations + i * nb_locations + j;
+
+							if (i < nb_zones && j == nb_zones) { // i == zone, j == depot
+								matind[nonzeroes] = index_var;
+								matval[nonzeroes] = -data.time_driving_zone_depot(i);
+								++nonzeroes;
+							}
+							else if (i < nb_zones && j > nb_zones) { // i == zone, j == collection point
+								matind[nonzeroes] = index_var;
+								const std::string& cp = data.collection_point(j);
+								matval[nonzeroes] = -data.time_driving_zone_collectionpoint(i, cp);
+								++nonzeroes;
+							}
+							else if (i == nb_zones && j < nb_zones) { // i == depot, j == zone
+								matind[nonzeroes] = index_var;
+								matval[nonzeroes] = -data.time_driving_zone_depot(j);
+								++nonzeroes;
+							}
+							else if (i > nb_zones && j < nb_zones) { // i == collection point, j == zone
+								matind[nonzeroes] = index_var;
+								const std::string& cp = data.collection_point(i);
+								matval[nonzeroes] = -data.time_driving_zone_collectionpoint(j, cp);
+								++nonzeroes;
+							}
+						}
+					}
+				}
+
+				// -sum(m) tau_P_tm*w_tqvm
+				for (int t = 0; t < nb_waste_types; ++t)
+				{
+					for (int m = 0; m < nb_zones; ++m)
+					{
+						matind[nonzeroes] = startindex_w_tqvm + t * nb_truck_types * _max_nb_trucks * nb_zones + q * _max_nb_trucks * nb_zones + v * nb_zones + m;
+						const std::string& waste_type = data.waste_type(t);
+						matval[nonzeroes] = -data.time_pickup(m, waste_type);
+						++nonzeroes;
+					}
+				}
+
+				// -tau_U_t
+				for (int t = 0; t < nb_waste_types; ++t)
+				{					
+					matind[nonzeroes] = startindex_y_tqv + t * nb_truck_types * _max_nb_trucks + q * _max_nb_trucks + v;
+					const std::string& waste_type = data.waste_type(t);
+					matval[nonzeroes] = -data.time_unloading(waste_type);
+					++nonzeroes;
+				}
+
+
+				if (nonzeroes >= maxnonzeroes)
+					throw std::runtime_error("Error in function IP_model_routing::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+				status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+				}
+
+				// change name of constraint
+				std::string conname = "c1_" + std::to_string(q + 1) + "_" + std::to_string(v + 1);
+				status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+				}
+			}
+		}
+
+		// 2: beta_qv <= T_q  forall q,v
+		for (int q = 0; q < nb_waste_types; ++q)
+		{
+			for (int v = 0; v < _max_nb_trucks; ++v)
+			{
+				++nb_constraints;
+
+				rhs[0] = data.max_driving_time(q);
+				sense[0] = 'L';
+				matbeg[0] = 0;
+
+				nonzeroes = 0;
+
+				// beta_qv
+				matind[nonzeroes] = startindex_beta_qv + q * _max_nb_trucks + v;
+				matval[nonzeroes] = 1;
+				++nonzeroes;
+
+				if (nonzeroes >= maxnonzeroes)
+					throw std::runtime_error("Error in function IP_model_routing::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+				status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+				}
+
+				// change name of constraint
+				std::string conname = "c2_" + std::to_string(q + 1) + "_" + std::to_string(v + 1);
+				status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+				}
+			}
+		}
+
+		// 3: sum(m) w_tqvm <= L_t   forall t,q,v,m
 		for (int t = 0; t < nb_waste_types; ++t)
 		{
 			for (int q = 0; q < nb_truck_types; ++q)
@@ -254,27 +390,19 @@ namespace IVM
 				{
 					++nb_constraints;
 
-					rhs[0] = 0;
-					sense[0] = 'E';
+					const std::string& waste_type = data.waste_type(t);
+					rhs[0] = data.capacity(q, waste_type);
+					sense[0] = 'L';
 					matbeg[0] = 0;
 
 					nonzeroes = 0;
 
-					// beta_qv
-					matind[nonzeroes] = startindex_beta_qv + q * _max_nb_trucks + v;
-					matval[nonzeroes] = 1;
-					++nonzeroes;
-
-					// -sum(i,j) tau_D_ij* x_qvij
-					for (int i = 0; i < nb_locations; ++i)
+					// sum(m) w_tqvm
+					for (int m = 0; m < nb_zones; ++m)
 					{
-						for (int j = 0; j < nb_locations; ++j)
-						{
-							matind[nonzeroes] = startindex_x_tqvij + t * nb_truck_types * _max_nb_trucks * nb_locations * nb_locations + q * _max_nb_trucks * nb_locations * nb_locations
-								+ v * nb_locations * nb_locations + i * nb_locations + j;
-							matval[nonzeroes] = - 
-							++nonzeroes;
-						}
+						matind[nonzeroes] = startindex_w_tqvm + t * nb_truck_types * _max_nb_trucks * nb_zones + q * _max_nb_trucks * nb_zones + v * nb_zones + m;
+						matval[nonzeroes] = 1;
+						++nonzeroes;
 					}
 
 					if (nonzeroes >= maxnonzeroes)
@@ -288,7 +416,7 @@ namespace IVM
 					}
 
 					// change name of constraint
-					std::string conname = "c1_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
+					std::string conname = "c3_" + std::to_string(t + 1) + "_" + std::to_string(q + 1) + "_" + std::to_string(v + 1);
 					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 					if (status != 0)
 					{
@@ -299,6 +427,166 @@ namespace IVM
 			}
 		}
 
+		// 4. x_tqvij - y_tqv <= 0   forall t,q,v,i,j
+		for (int t = 0; t < nb_waste_types; ++t)
+		{
+			for (int q = 0; q < nb_truck_types; ++q)
+			{
+				for (int v = 0; v < _max_nb_trucks; ++v)
+				{
+					for (int i = 0; i < nb_locations; ++i)
+					{
+						for (int j = 0; j < nb_locations; ++j)
+						{
+							++nb_constraints;
+
+							rhs[0] = 0;
+							sense[0] = 'L';
+							matbeg[0] = 0;
+
+							nonzeroes = 0;
+
+							// x_tqvij
+							matind[nonzeroes] = startindex_x_tqvij + t * nb_truck_types * _max_nb_trucks * nb_locations * nb_locations + q * _max_nb_trucks * nb_locations * nb_locations
+								+ v * nb_locations * nb_locations + i * nb_locations + j;
+							matval[nonzeroes] = 1;
+							++nonzeroes;
+
+							// - y_tqv
+							matind[nonzeroes] = startindex_y_tqv + t * nb_truck_types * _max_nb_trucks + q * _max_nb_trucks + v;
+							matval[nonzeroes] = -1;
+							++nonzeroes;
+
+							if (nonzeroes >= maxnonzeroes)
+								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+							status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+							if (status != 0)
+							{
+								CPXgeterrorstring(env, status, error_text);
+								throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+							}
+
+							// change name of constraint
+							std::string conname = "c4_" + std::to_string(t + 1) + "_" + std::to_string(q + 1) + "_" + std::to_string(v + 1)
+								+ "_" + std::to_string(i + 1) + "_" + std::to_string(j + 1);
+							status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+							if (status != 0)
+							{
+								CPXgeterrorstring(env, status, error_text);
+								throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// 5: sum(j) x_tqv,depot,j >= y_tqv   forall t,q,v
+		for (int t = 0; t < nb_waste_types; ++t)
+		{
+			for (int q = 0; q < nb_truck_types; ++q)
+			{
+				for (int v = 0; v < _max_nb_trucks; ++v)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'G';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// sum(j) x_tqvij
+					for (int j = 0; j < nb_locations; ++j)
+					{
+						const int index_depot = nb_locations;
+
+						matind[nonzeroes] = startindex_x_tqvij + t * nb_truck_types * _max_nb_trucks * nb_locations * nb_locations + q * _max_nb_trucks * nb_locations * nb_locations
+							+ v * nb_locations * nb_locations + index_depot * nb_locations + j;
+						matval[nonzeroes] = 1;
+						++nonzeroes;
+					}
+
+					// - y_tqv
+					matind[nonzeroes] = startindex_y_tqv + t * nb_truck_types * _max_nb_trucks + q * _max_nb_trucks + v;
+					matval[nonzeroes] = -1;
+					++nonzeroes;
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c5_" + std::to_string(t + 1) + "_" + std::to_string(q + 1) + "_" + std::to_string(v + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// 6: sum(j) x_tqv,i,depot >= y_tqv   forall t,q,v
+		for (int t = 0; t < nb_waste_types; ++t)
+		{
+			for (int q = 0; q < nb_truck_types; ++q)
+			{
+				for (int v = 0; v < _max_nb_trucks; ++v)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'G';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// sum(i) x_tqvij
+					for (int i= 0; i < nb_locations; ++i)
+					{
+						const int index_depot = nb_locations;
+
+						matind[nonzeroes] = startindex_x_tqvij + t * nb_truck_types * _max_nb_trucks * nb_locations * nb_locations + q * _max_nb_trucks * nb_locations * nb_locations
+							+ v * nb_locations * nb_locations + i * nb_locations + index_depot;
+						matval[nonzeroes] = 1;
+						++nonzeroes;
+					}
+
+					// - y_tqv
+					matind[nonzeroes] = startindex_y_tqv + t * nb_truck_types * _max_nb_trucks + q * _max_nb_trucks + v;
+					matval[nonzeroes] = -1;
+					++nonzeroes;
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c6_" + std::to_string(t + 1) + "_" + std::to_string(q + 1) + "_" + std::to_string(v + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
 		
 
 
@@ -383,10 +671,10 @@ namespace IVM
 		}
 	}
 
-	void IP_model_routing::run(const Instance& data)
+	void IP_model_routing::run(const Instance& data, size_t day)
 	{
 		initialize_cplex();
-		build_problem(data);
+		build_problem(data, day);
 		solve_problem(data);
 		clear_cplex();
 	}

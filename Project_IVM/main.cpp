@@ -6,9 +6,6 @@
 
 int main()
 {
-	/*IVM::Instance instance;
-	instance.read_data_xml("random_instance.xml");*/
-
 	IVM::Instance data;
 	data.read_data_xml("random_instance.xml");
 
@@ -21,7 +18,7 @@ int main()
 	catch (const std::exception& e) {
 		std::cout << "\n\n\n" << e.what();
 	}
-
+	
 	
 
 	std::cout << "\n\n\n\n\n\n";

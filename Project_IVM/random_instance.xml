@@ -1,427 +1,426 @@
 <?xml version="1.0"?>
 <Instantie naam="Random" aantal_dagen="5" aantal_weken="2" max_bezoeken="1">
-	<Afvaltype naam="GFT"/>
-	<Afvaltype naam="restafval"/>
-	<Trucktype naam="truck_GFT" max_uren="7.5" vaste_kosten="900" variabele_kosten="10">
+	<Afvaltype naam="GFT" lostijd="0.25"/>
+	<Afvaltype naam="restafval" lostijd="0.25"/>
+	<Trucktype naam="truck_GFT" max_uren="7.5" vaste_kosten="100" variabele_kosten="70">
 		<Capaciteit afvaltype="GFT" cap="10"/>
 		<Capaciteit afvaltype="restafval" cap="12.5"/>
 	</Trucktype>
-	<Trucktype naam="truck_restafval" max_uren="7.5" vaste_kosten="900" variabele_kosten="10">
+	<Trucktype naam="truck_restafval" max_uren="7.5" vaste_kosten="100" variabele_kosten="70">
 		<Capaciteit afvaltype="GFT" cap="0"/>
 		<Capaciteit afvaltype="restafval" cap="25"/>
 	</Trucktype>
-	<Collectiepunt naam="CP1" lostijd="0.25"/>
-	<Collectiepunt naam="CP2" lostijd="0.25"/>
-	<Collectiepunt naam="CP3" lostijd="0.25"/>
+	<Collectiepunt naam="CP1"/>
+	<Collectiepunt naam="CP2"/>
+	<Collectiepunt naam="CP3"/>
 	<Zone naam="Z1">
-		<Afval afvaltype="GFT" hoeveelheid="8" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="17" collectietijd="2.7"/>
-		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.3"/>
-		<Rijtijd naar="CP1" tijd="0.2"/>
-		<Rijtijd naar="CP2" tijd="0.3"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="4.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.7" collectietijd="2.2"/>
+		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.8"/>
+		<Rijtijd naar="CP1" tijd="0.8"/>
+		<Rijtijd naar="CP2" tijd="0.7"/>
 		<Rijtijd naar="CP3" tijd="0.1"/>
-		<VerbodenDag dag="maandag"/>
 	</Zone>
 	<Zone naam="Z2">
-		<Afval afvaltype="GFT" hoeveelheid="6" collectietijd="3.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="23" collectietijd="2.2"/>
-		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.3"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.6" collectietijd="4.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1" collectietijd="2.7"/>
+		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.8"/>
 		<Rijtijd naar="CP1" tijd="0.8"/>
-		<Rijtijd naar="CP2" tijd="0.3"/>
+		<Rijtijd naar="CP2" tijd="0.2"/>
 		<Rijtijd naar="CP3" tijd="0.5"/>
 	</Zone>
 	<Zone naam="Z3">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="3.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="20" collectietijd="2.4"/>
-		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.6"/>
-		<Rijtijd naar="CP2" tijd="0.7"/>
-		<Rijtijd naar="CP3" tijd="0.1"/>
-	</Zone>
-	<Zone naam="Z4">
-		<Afval afvaltype="GFT" hoeveelheid="6" collectietijd="5.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="20" collectietijd="2.1"/>
-		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.5"/>
-		<Rijtijd naar="CP1" tijd="0.7"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.4"/>
-	</Zone>
-	<Zone naam="Z5">
-		<Afval afvaltype="GFT" hoeveelheid="8" collectietijd="5.2"/>
-		<Afval afvaltype="restafval" hoeveelheid="18" collectietijd="2.3"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.2"/>
-		<Rijtijd naar="CP1" tijd="0.6"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
-		<Rijtijd naar="CP3" tijd="0.6"/>
-	</Zone>
-	<Zone naam="Z6">
-		<Afval afvaltype="GFT" hoeveelheid="9" collectietijd="4.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="16" collectietijd="2.6"/>
+		<Afval afvaltype="GFT" hoeveelheid="1" collectietijd="5"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.6" collectietijd="2"/>
 		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.6"/>
 		<Rijtijd naar="CP1" tijd="0.5"/>
+		<Rijtijd naar="CP2" tijd="0.2"/>
+		<Rijtijd naar="CP3" tijd="0.6"/>
+	</Zone>
+	<Zone naam="Z4">
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="4.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="2.1" collectietijd="2.3"/>
+		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.5"/>
+		<Rijtijd naar="CP1" tijd="0.3"/>
+		<Rijtijd naar="CP2" tijd="0.3"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
+	</Zone>
+	<Zone naam="Z5">
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="3.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.3" collectietijd="2.2"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.5"/>
+		<Rijtijd naar="CP1" tijd="0.3"/>
+		<Rijtijd naar="CP2" tijd="0.6"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
+	</Zone>
+	<Zone naam="Z6">
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="4.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.7" collectietijd="1.9"/>
+		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.2"/>
+		<Rijtijd naar="CP1" tijd="0.3"/>
+		<Rijtijd naar="CP2" tijd="0.7"/>
+		<Rijtijd naar="CP3" tijd="0.5"/>
+	</Zone>
+	<Zone naam="Z7">
+		<Afval afvaltype="GFT" hoeveelheid="0.8" collectietijd="5.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.2" collectietijd="1.9"/>
+		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.6"/>
+		<Rijtijd naar="CP1" tijd="0.7"/>
+		<Rijtijd naar="CP2" tijd="0.2"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
+	</Zone>
+	<Zone naam="Z8">
+		<Afval afvaltype="GFT" hoeveelheid="0.6" collectietijd="3.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.6" collectietijd="2.4"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.7"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.2"/>
+		<Rijtijd naar="CP3" tijd="0.3"/>
+	</Zone>
+	<Zone naam="Z9">
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="5.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="2.2" collectietijd="2.7"/>
+		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.6"/>
+		<Rijtijd naar="CP1" tijd="0.7"/>
+		<Rijtijd naar="CP2" tijd="0.5"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
+	</Zone>
+	<Zone naam="Z10">
+		<Afval afvaltype="GFT" hoeveelheid="0.2" collectietijd="5"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.4" collectietijd="1.7"/>
+		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.2"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
+	</Zone>
+	<Zone naam="Z11">
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="4.2"/>
+		<Afval afvaltype="restafval" hoeveelheid="2.1" collectietijd="2"/>
+		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.2"/>
+		<Rijtijd naar="CP1" tijd="0.8"/>
 		<Rijtijd naar="CP2" tijd="0.8"/>
 		<Rijtijd naar="CP3" tijd="0.4"/>
 	</Zone>
-	<Zone naam="Z7">
-		<Afval afvaltype="GFT" hoeveelheid="9" collectietijd="4.8"/>
-		<Afval afvaltype="restafval" hoeveelheid="12" collectietijd="1.9"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.3"/>
-		<Rijtijd naar="CP1" tijd="0.7"/>
-		<Rijtijd naar="CP2" tijd="0.5"/>
-		<Rijtijd naar="CP3" tijd="0.6"/>
-	</Zone>
-	<Zone naam="Z8">
-		<Afval afvaltype="GFT" hoeveelheid="3" collectietijd="5.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="17" collectietijd="2.5"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.7"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
-		<Rijtijd naar="CP3" tijd="0.4"/>
-	</Zone>
-	<Zone naam="Z9">
-		<Afval afvaltype="GFT" hoeveelheid="6" collectietijd="4.2"/>
-		<Afval afvaltype="restafval" hoeveelheid="18" collectietijd="2.1"/>
-		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.2"/>
-		<Rijtijd naar="CP2" tijd="0.7"/>
-		<Rijtijd naar="CP3" tijd="0.3"/>
-	</Zone>
-	<Zone naam="Z10">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="3.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="6" collectietijd="1.8"/>
-		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.1"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
-		<Rijtijd naar="CP3" tijd="0.6"/>
-	</Zone>
-	<Zone naam="Z11">
-		<Afval afvaltype="GFT" hoeveelheid="3" collectietijd="5.2"/>
-		<Afval afvaltype="restafval" hoeveelheid="13" collectietijd="1.7"/>
-		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.1"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
-		<Rijtijd naar="CP3" tijd="0.1"/>
-	</Zone>
 	<Zone naam="Z12">
-		<Afval afvaltype="GFT" hoeveelheid="2" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="25" collectietijd="1.8"/>
-		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.2"/>
-		<Rijtijd naar="CP1" tijd="0.8"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
+		<Afval afvaltype="GFT" hoeveelheid="1" collectietijd="3.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.5" collectietijd="2"/>
+		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.6"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.3"/>
 		<Rijtijd naar="CP3" tijd="0.6"/>
 	</Zone>
 	<Zone naam="Z13">
-		<Afval afvaltype="GFT" hoeveelheid="10" collectietijd="4.2"/>
-		<Afval afvaltype="restafval" hoeveelheid="7" collectietijd="2.6"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="4.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.8" collectietijd="2.6"/>
 		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.4"/>
-		<Rijtijd naar="CP2" tijd="0.6"/>
-		<Rijtijd naar="CP3" tijd="0.4"/>
+		<Rijtijd naar="Depot" tijd="0.2"/>
+		<Rijtijd naar="CP1" tijd="0.6"/>
+		<Rijtijd naar="CP2" tijd="0.1"/>
+		<Rijtijd naar="CP3" tijd="0.3"/>
 	</Zone>
 	<Zone naam="Z14">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="3.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="19" collectietijd="2.5"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.5" collectietijd="4.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.6" collectietijd="2.3"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.5"/>
+		<Rijtijd naar="CP2" tijd="0.6"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
+	</Zone>
+	<Zone naam="Z15">
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="4.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.8" collectietijd="2.2"/>
 		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.2"/>
 		<Rijtijd naar="CP1" tijd="0.3"/>
-		<Rijtijd naar="CP2" tijd="0.3"/>
-		<Rijtijd naar="CP3" tijd="0.1"/>
-	</Zone>
-	<Zone naam="Z15">
-		<Afval afvaltype="GFT" hoeveelheid="8" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="10" collectietijd="2.4"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.6"/>
-		<Rijtijd naar="CP1" tijd="0.4"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
-		<Rijtijd naar="CP3" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.4"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
 	</Zone>
 	<Zone naam="Z16">
-		<Afval afvaltype="GFT" hoeveelheid="10" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="15" collectietijd="2.4"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.8"/>
-		<Rijtijd naar="CP1" tijd="0.5"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.5"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.2" collectietijd="4.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.9" collectietijd="2.5"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.5"/>
+		<Rijtijd naar="CP1" tijd="0.3"/>
+		<Rijtijd naar="CP2" tijd="0.7"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
 	</Zone>
 	<Zone naam="Z17">
-		<Afval afvaltype="GFT" hoeveelheid="2" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="8" collectietijd="2"/>
-		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.6"/>
-		<Rijtijd naar="CP1" tijd="0.3"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.5"/>
-	</Zone>
-	<Zone naam="Z18">
-		<Afval afvaltype="GFT" hoeveelheid="5" collectietijd="3.8"/>
-		<Afval afvaltype="restafval" hoeveelheid="22" collectietijd="2"/>
-		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.3"/>
-		<Rijtijd naar="CP1" tijd="0.4"/>
-		<Rijtijd naar="CP2" tijd="0.6"/>
-		<Rijtijd naar="CP3" tijd="0.4"/>
-	</Zone>
-	<Zone naam="Z19">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="4.8"/>
-		<Afval afvaltype="restafval" hoeveelheid="5" collectietijd="2"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="5.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.7" collectietijd="2.2"/>
 		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.3"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.6"/>
-	</Zone>
-	<Zone naam="Z20">
-		<Afval afvaltype="GFT" hoeveelheid="3" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="23" collectietijd="1.9"/>
-		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.5"/>
+		<Rijtijd naar="Depot" tijd="0.7"/>
 		<Rijtijd naar="CP1" tijd="0.6"/>
-		<Rijtijd naar="CP2" tijd="0.7"/>
+		<Rijtijd naar="CP2" tijd="0.3"/>
 		<Rijtijd naar="CP3" tijd="0.4"/>
 	</Zone>
-	<Zone naam="Z21">
-		<Afval afvaltype="GFT" hoeveelheid="9" collectietijd="3.8"/>
-		<Afval afvaltype="restafval" hoeveelheid="14" collectietijd="1.8"/>
+	<Zone naam="Z18">
+		<Afval afvaltype="GFT" hoeveelheid="0.3" collectietijd="5.2"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.7" collectietijd="2.1"/>
+		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.5"/>
+		<Rijtijd naar="CP1" tijd="0.7"/>
+		<Rijtijd naar="CP2" tijd="0.7"/>
+		<Rijtijd naar="CP3" tijd="0.6"/>
+	</Zone>
+	<Zone naam="Z19">
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="4.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.5" collectietijd="2.7"/>
 		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.6"/>
+		<Rijtijd naar="CP1" tijd="0.1"/>
+		<Rijtijd naar="CP2" tijd="0.4"/>
+		<Rijtijd naar="CP3" tijd="0.2"/>
+	</Zone>
+	<Zone naam="Z20">
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.8" collectietijd="2.1"/>
+		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.6"/>
+		<Rijtijd naar="CP1" tijd="0.7"/>
+		<Rijtijd naar="CP2" tijd="0.6"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
+	</Zone>
+	<Zone naam="Z21">
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="4.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="2" collectietijd="2.1"/>
+		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.6"/>
+		<Rijtijd naar="CP1" tijd="0.5"/>
+		<Rijtijd naar="CP2" tijd="0.6"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
+	</Zone>
+	<Zone naam="Z22">
+		<Afval afvaltype="GFT" hoeveelheid="0.8" collectietijd="3.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.7" collectietijd="1.9"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.1"/>
+		<Rijtijd naar="CP2" tijd="0.8"/>
+		<Rijtijd naar="CP3" tijd="0.5"/>
+	</Zone>
+	<Zone naam="Z23">
+		<Afval afvaltype="GFT" hoeveelheid="0.8" collectietijd="5.2"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.4" collectietijd="2"/>
+		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.2"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.8"/>
+		<Rijtijd naar="CP3" tijd="0.3"/>
+	</Zone>
+	<Zone naam="Z24">
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="5.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1" collectietijd="2.4"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.1"/>
+		<Rijtijd naar="CP2" tijd="0.8"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
+	</Zone>
+	<Zone naam="Z25">
+		<Afval afvaltype="GFT" hoeveelheid="1" collectietijd="5.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.7" collectietijd="1.8"/>
+		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.3"/>
+		<Rijtijd naar="CP1" tijd="0.8"/>
+		<Rijtijd naar="CP2" tijd="0.6"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
+	</Zone>
+	<Zone naam="Z26">
+		<Afval afvaltype="GFT" hoeveelheid="0.2" collectietijd="5.4"/>
+		<Afval afvaltype="restafval" hoeveelheid="2" collectietijd="2.1"/>
+		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.7"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
+	</Zone>
+	<Zone naam="Z27">
+		<Afval afvaltype="GFT" hoeveelheid="0.5" collectietijd="4.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.8" collectietijd="1.7"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.8"/>
+		<Rijtijd naar="CP1" tijd="0.3"/>
 		<Rijtijd naar="CP2" tijd="0.1"/>
 		<Rijtijd naar="CP3" tijd="0.6"/>
 	</Zone>
-	<Zone naam="Z22">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="4"/>
-		<Afval afvaltype="restafval" hoeveelheid="9" collectietijd="2.1"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.7"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.2"/>
-	</Zone>
-	<Zone naam="Z23">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="3.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="11" collectietijd="2.5"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
+	<Zone naam="Z28">
+		<Afval afvaltype="GFT" hoeveelheid="0.7" collectietijd="3.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="2.5" collectietijd="2.1"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.3"/>
-		<Rijtijd naar="CP1" tijd="0.1"/>
+		<Rijtijd naar="CP1" tijd="0.8"/>
 		<Rijtijd naar="CP2" tijd="0.4"/>
-		<Rijtijd naar="CP3" tijd="0.4"/>
+		<Rijtijd naar="CP3" tijd="0.1"/>
 	</Zone>
-	<Zone naam="Z24">
-		<Afval afvaltype="GFT" hoeveelheid="6" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="10" collectietijd="1.9"/>
+	<Zone naam="Z29">
+		<Afval afvaltype="GFT" hoeveelheid="0.5" collectietijd="4.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.5" collectietijd="1.8"/>
 		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.1"/>
+		<Rijtijd naar="CP1" tijd="0.3"/>
+		<Rijtijd naar="CP2" tijd="0.7"/>
+		<Rijtijd naar="CP3" tijd="0.6"/>
+	</Zone>
+	<Zone naam="Z30">
+		<Afval afvaltype="GFT" hoeveelheid="0.5" collectietijd="4.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="2.2" collectietijd="2"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.6"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
+		<Rijtijd naar="CP1" tijd="0.5"/>
+		<Rijtijd naar="CP2" tijd="0.1"/>
 		<Rijtijd naar="CP3" tijd="0.2"/>
 	</Zone>
-	<Zone naam="Z25">
-		<Afval afvaltype="GFT" hoeveelheid="8" collectietijd="5"/>
-		<Afval afvaltype="restafval" hoeveelheid="22" collectietijd="1.7"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.6"/>
-		<Rijtijd naar="CP2" tijd="0.6"/>
-		<Rijtijd naar="CP3" tijd="0.5"/>
-	</Zone>
-	<Zone naam="Z26">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="5.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="12" collectietijd="2"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.6"/>
-		<Rijtijd naar="CP1" tijd="0.3"/>
+	<Zone naam="Z31">
+		<Afval afvaltype="GFT" hoeveelheid="0.6" collectietijd="4.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.2" collectietijd="1.7"/>
+		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
 		<Rijtijd naar="CP2" tijd="0.2"/>
 		<Rijtijd naar="CP3" tijd="0.7"/>
 	</Zone>
-	<Zone naam="Z27">
-		<Afval afvaltype="GFT" hoeveelheid="9" collectietijd="3.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="19" collectietijd="2.4"/>
-		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.3"/>
-		<Rijtijd naar="CP1" tijd="0.3"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.1"/>
-	</Zone>
-	<Zone naam="Z28">
-		<Afval afvaltype="GFT" hoeveelheid="4" collectietijd="4.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="22" collectietijd="2.2"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.8"/>
-		<Rijtijd naar="CP1" tijd="0.7"/>
-		<Rijtijd naar="CP2" tijd="0.7"/>
-		<Rijtijd naar="CP3" tijd="0.8"/>
-	</Zone>
-	<Zone naam="Z29">
-		<Afval afvaltype="GFT" hoeveelheid="6" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="13" collectietijd="1.9"/>
-		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
+	<Zone naam="Z32">
+		<Afval afvaltype="GFT" hoeveelheid="0.5" collectietijd="4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.9" collectietijd="1.8"/>
+		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.6"/>
 		<Rijtijd naar="CP1" tijd="0.1"/>
-		<Rijtijd naar="CP2" tijd="0.7"/>
+		<Rijtijd naar="CP2" tijd="0.4"/>
 		<Rijtijd naar="CP3" tijd="0.2"/>
 	</Zone>
-	<Zone naam="Z30">
-		<Afval afvaltype="GFT" hoeveelheid="5" collectietijd="3.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="18" collectietijd="2.7"/>
+	<Zone naam="Z33">
+		<Afval afvaltype="GFT" hoeveelheid="0.2" collectietijd="3.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.5" collectietijd="2.7"/>
 		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.5"/>
 		<Rijtijd naar="CP1" tijd="0.2"/>
-		<Rijtijd naar="CP2" tijd="0.6"/>
-		<Rijtijd naar="CP3" tijd="0.1"/>
-	</Zone>
-	<Zone naam="Z31">
-		<Afval afvaltype="GFT" hoeveelheid="10" collectietijd="4.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="23" collectietijd="2.3"/>
-		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.6"/>
-		<Rijtijd naar="CP2" tijd="0.3"/>
-		<Rijtijd naar="CP3" tijd="0.3"/>
-	</Zone>
-	<Zone naam="Z32">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="4.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="25" collectietijd="2.3"/>
-		<HuidigeKalender afvaltype="restafval" dag="woensdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="woensdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.6"/>
-		<Rijtijd naar="CP1" tijd="0.8"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.2"/>
-	</Zone>
-	<Zone naam="Z33">
-		<Afval afvaltype="GFT" hoeveelheid="7" collectietijd="5.2"/>
-		<Afval afvaltype="restafval" hoeveelheid="17" collectietijd="2.6"/>
-		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.5"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
+		<Rijtijd naar="CP2" tijd="0.5"/>
 		<Rijtijd naar="CP3" tijd="0.7"/>
 	</Zone>
 	<Zone naam="Z34">
-		<Afval afvaltype="GFT" hoeveelheid="5" collectietijd="3.6"/>
-		<Afval afvaltype="restafval" hoeveelheid="15" collectietijd="2.4"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="5"/>
+		<Afval afvaltype="restafval" hoeveelheid="2.1" collectietijd="2.2"/>
 		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.4"/>
-		<Rijtijd naar="CP1" tijd="0.3"/>
-		<Rijtijd naar="CP2" tijd="0.3"/>
-		<Rijtijd naar="CP3" tijd="0.2"/>
+		<Rijtijd naar="Depot" tijd="0.5"/>
+		<Rijtijd naar="CP1" tijd="0.4"/>
+		<Rijtijd naar="CP2" tijd="0.4"/>
+		<Rijtijd naar="CP3" tijd="0.8"/>
 	</Zone>
 	<Zone naam="Z35">
-		<Afval afvaltype="GFT" hoeveelheid="10" collectietijd="4.8"/>
-		<Afval afvaltype="restafval" hoeveelheid="24" collectietijd="2.3"/>
-		<HuidigeKalender afvaltype="restafval" dag="dinsdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="dinsdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.6"/>
+		<Afval afvaltype="GFT" hoeveelheid="0.4" collectietijd="3.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="2" collectietijd="2.4"/>
+		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.5"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.3"/>
+		<Rijtijd naar="CP3" tijd="0.4"/>
+	</Zone>
+	<Zone naam="Z36">
+		<Afval afvaltype="GFT" hoeveelheid="0.3" collectietijd="4"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.1" collectietijd="2.6"/>
+		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.6"/>
+		<Rijtijd naar="CP1" tijd="0.8"/>
+		<Rijtijd naar="CP2" tijd="0.4"/>
+		<Rijtijd naar="CP3" tijd="0.2"/>
+	</Zone>
+	<Zone naam="Z37">
+		<Afval afvaltype="GFT" hoeveelheid="0.6" collectietijd="4"/>
+		<Afval afvaltype="restafval" hoeveelheid="0.7" collectietijd="2.5"/>
+		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.8"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
+		<Rijtijd naar="CP2" tijd="0.2"/>
+		<Rijtijd naar="CP3" tijd="0.7"/>
+	</Zone>
+	<Zone naam="Z38">
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="5.2"/>
+		<Afval afvaltype="restafval" hoeveelheid="2.4" collectietijd="2.6"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.4"/>
+		<Rijtijd naar="CP2" tijd="0.6"/>
+		<Rijtijd naar="CP3" tijd="0.3"/>
+	</Zone>
+	<Zone naam="Z39">
+		<Afval afvaltype="GFT" hoeveelheid="0.2" collectietijd="4.8"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.6" collectietijd="2.3"/>
+		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
+		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.2"/>
 		<Rijtijd naar="CP2" tijd="0.4"/>
 		<Rijtijd naar="CP3" tijd="0.6"/>
 	</Zone>
-	<Zone naam="Z36">
-		<Afval afvaltype="GFT" hoeveelheid="9" collectietijd="5.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="6" collectietijd="2.3"/>
+	<Zone naam="Z40">
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="4.2"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.3" collectietijd="2.7"/>
 		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.3"/>
-		<Rijtijd naar="CP1" tijd="0.5"/>
-		<Rijtijd naar="CP2" tijd="0.6"/>
-		<Rijtijd naar="CP3" tijd="0.7"/>
+		<Rijtijd naar="Depot" tijd="0.4"/>
+		<Rijtijd naar="CP1" tijd="0.4"/>
+		<Rijtijd naar="CP2" tijd="0.5"/>
+		<Rijtijd naar="CP3" tijd="0.4"/>
 	</Zone>
-	<Zone naam="Z37">
-		<Afval afvaltype="GFT" hoeveelheid="10" collectietijd="5.2"/>
-		<Afval afvaltype="restafval" hoeveelheid="14" collectietijd="2.7"/>
+	<Zone naam="Z41">
+		<Afval afvaltype="GFT" hoeveelheid="0.9" collectietijd="3.6"/>
+		<Afval afvaltype="restafval" hoeveelheid="1.1" collectietijd="1.9"/>
 		<HuidigeKalender afvaltype="restafval" dag="donderdag" week="1"/>
 		<HuidigeKalender afvaltype="GFT" dag="donderdag" week="2"/>
 		<Rijtijd naar="Depot" tijd="0.1"/>
 		<Rijtijd naar="CP1" tijd="0.4"/>
-		<Rijtijd naar="CP2" tijd="0.1"/>
-		<Rijtijd naar="CP3" tijd="0.8"/>
-	</Zone>
-	<Zone naam="Z38">
-		<Afval afvaltype="GFT" hoeveelheid="2" collectietijd="5"/>
-		<Afval afvaltype="restafval" hoeveelheid="15" collectietijd="2.3"/>
-		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.8"/>
-		<Rijtijd naar="CP1" tijd="0.2"/>
-		<Rijtijd naar="CP2" tijd="0.4"/>
-		<Rijtijd naar="CP3" tijd="0.2"/>
-	</Zone>
-	<Zone naam="Z39">
-		<Afval afvaltype="GFT" hoeveelheid="8" collectietijd="4.8"/>
-		<Afval afvaltype="restafval" hoeveelheid="5" collectietijd="2.6"/>
-		<HuidigeKalender afvaltype="restafval" dag="maandag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="maandag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.7"/>
-		<Rijtijd naar="CP1" tijd="0.8"/>
-		<Rijtijd naar="CP2" tijd="0.2"/>
-		<Rijtijd naar="CP3" tijd="0.8"/>
-	</Zone>
-	<Zone naam="Z40">
-		<Afval afvaltype="GFT" hoeveelheid="10" collectietijd="5"/>
-		<Afval afvaltype="restafval" hoeveelheid="20" collectietijd="2"/>
-		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.5"/>
-		<Rijtijd naar="CP1" tijd="0.2"/>
-		<Rijtijd naar="CP2" tijd="0.6"/>
+		<Rijtijd naar="CP2" tijd="0.5"/>
 		<Rijtijd naar="CP3" tijd="0.4"/>
-	</Zone>
-	<Zone naam="Z41">
-		<Afval afvaltype="GFT" hoeveelheid="3" collectietijd="5.4"/>
-		<Afval afvaltype="restafval" hoeveelheid="17" collectietijd="2.5"/>
-		<HuidigeKalender afvaltype="restafval" dag="vrijdag" week="1"/>
-		<HuidigeKalender afvaltype="GFT" dag="vrijdag" week="2"/>
-		<Rijtijd naar="Depot" tijd="0.3"/>
-		<Rijtijd naar="CP1" tijd="0.8"/>
-		<Rijtijd naar="CP2" tijd="0.7"/>
-		<Rijtijd naar="CP3" tijd="0.1"/>
 	</Zone>
 </Instantie>
