@@ -319,7 +319,7 @@ namespace IVM
 			double demand_gft = static_cast<double>(dist_demand_gft(engine)) / 10.0;
 			double demand_restafval = static_cast<double>(dist_demand_rest(engine)) / 10.0;
 			double collectiontimerest = static_cast<double>(dist_collection_time(engine)) / 10.0;
-			double collectiontimegft = static_cast<double>(dist_collection_time(engine)) / 5.0;
+			double collectiontimegft = static_cast<double>(dist_collection_time(engine)) / 10.0;
 			int current_day = dist_day(engine);
 
 			file << "\n\t<Zone naam=\"Z" << i + 1 << "\">"

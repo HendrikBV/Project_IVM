@@ -7,15 +7,24 @@
 int main()
 {
 	IVM::Instance data;
-	data.read_data_xml("random_instance.xml");
+	IVM::IP_model_allocation model_allocation;
+	IVM::IP_model_routing model_routing;
 
-	IVM::IP_model_allocation model;
-	try {
-		model.set_scenario(IVM::IP_model_allocation::FREE_WEEK_FREE_DAY);
-		model.set_fraction_allowed_deviations(0.2);
-		model.run(data);
+	try 
+	{
+		data.read_data_xml("small_instance.xml");
+
+		model_allocation.set_scenario(IVM::IP_model_allocation::FREE_WEEK_FREE_DAY);
+		model_allocation.set_fraction_allowed_deviations(1);
+		model_allocation.run(data);
+
+		for (int d = 0; d < data.nb_days() * data.nb_weeks(); ++d)
+		{
+			model_routing.run(data, d);
+		}
 	}
-	catch (const std::exception& e) {
+	catch (const std::exception& e) 
+	{
 		std::cout << "\n\n\n" << e.what();
 	}
 	

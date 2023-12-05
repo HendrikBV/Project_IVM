@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <memory>
 #include <iostream>
+#include <fstream>
 #include <chrono>
 
 
@@ -74,6 +75,8 @@ namespace IVM
 
 
 		// add variables
+		int nb_variables = -1;
+
 		// variable x_tmdw
 		const int startindex_x_tmdw = 0;
 		for (int t = 0; t < nb_types; ++t)
@@ -84,6 +87,8 @@ namespace IVM
 				{
 					for (int w = 0; w < nb_weeks; ++w)
 					{
+						++nb_variables;
+
 						obj[0] = 0;
 						lb[0] = 0;
 
@@ -96,7 +101,7 @@ namespace IVM
 
 						// change variable name
 						std::string varname = "x_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-						status = CPXchgname(env, problem, 'c', startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+						status = CPXchgname(env, problem, 'c', nb_variables, varname.c_str());
 						if (status != 0)
 						{
 							CPXgeterrorstring(env, status, error_text);
@@ -117,6 +122,8 @@ namespace IVM
 				{
 					for (int w = 0; w < nb_weeks; ++w)
 					{
+						++nb_variables;
+
 						obj[0] = 0;
 						lb[0] = 0;
 						ub[0] = 1;
@@ -131,7 +138,7 @@ namespace IVM
 
 						// change variable name
 						std::string varname = "y_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-						status = CPXchgname(env, problem, 'c', startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+						status = CPXchgname(env, problem, 'c', nb_variables, varname.c_str());
 						if (status != 0)
 						{
 							CPXgeterrorstring(env, status, error_text);
@@ -152,6 +159,8 @@ namespace IVM
 				{
 					for (int w = 0; w < nb_weeks; ++w)
 					{
+						++nb_variables;
+
 						obj[0] = 0;
 						lb[0] = 0;
 						ub[0] = 1;
@@ -166,7 +175,7 @@ namespace IVM
 
 						// change variable name
 						std::string varname = "z_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-						status = CPXchgname(env, problem, 'c', startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+						status = CPXchgname(env, problem, 'c', nb_variables, varname.c_str());
 						if (status != 0)
 						{
 							CPXgeterrorstring(env, status, error_text);
@@ -185,6 +194,8 @@ namespace IVM
 			{
 				for (int w = 0; w < nb_weeks; ++w)
 				{
+					++nb_variables;
+
 					obj[0] = 1;
 					lb[0] = 0;
 
@@ -196,8 +207,8 @@ namespace IVM
 					}
 
 					// change variable name
-					std::string varname = "e_" + std::to_string(t + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
-					status = CPXchgname(env, problem, 'c', startindex_e_tdw + t * nb_days * nb_weeks + d * nb_weeks + w, varname.c_str());
+					std::string varname = "beta_" + std::to_string(t + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
+					status = CPXchgname(env, problem, 'c', nb_variables, varname.c_str());
 					if (status != 0)
 					{
 						CPXgeterrorstring(env, status, error_text);
@@ -833,10 +844,110 @@ namespace IVM
 			{
 				std::cout << "\nObjval = " << objval;
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
+
+				const size_t nb_waste_types = data.nb_waste_types();
+				const size_t nb_zones = data.nb_zones();
+				const size_t nb_days = data.nb_days();
+				const size_t nb_weeks = data.nb_weeks();
+
+				// Obtain values for variables
+				std::vector<double> x_tmdw;
+				std::vector<int> y_tmdw, z_tmdw;
+				std::vector<double> e_tdw;
+				x_tmdw.reserve(nb_waste_types * nb_zones * nb_days * nb_weeks);
+				y_tmdw.reserve(nb_waste_types * nb_zones * nb_days * nb_weeks);
+				z_tmdw.reserve(nb_waste_types * nb_zones * nb_days * nb_weeks);
+				e_tdw.reserve(nb_waste_types * nb_days * nb_weeks);
+
+				for (int t = 0; t < nb_waste_types; ++t) {
+					for (int m = 0; m < nb_zones; ++m) {
+						for (int d = 0; d < nb_days; ++d) {
+							for (int w = 0; w < nb_weeks; ++w) {
+								double x = solution_problem[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
+								x_tmdw.push_back(x);
+
+								int y = static_cast<int>(solution_problem[nb_waste_types * nb_zones * nb_days * nb_weeks + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w] + 0.1);
+								y_tmdw.push_back(y);
+
+								int z = static_cast<int>(solution_problem[2 * nb_waste_types * nb_zones * nb_days * nb_weeks + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w] + 0.1);
+								z_tmdw.push_back(z);
+
+								if (m == 0) {
+									double e = solution_problem[3 * nb_waste_types * nb_zones * nb_days * nb_weeks + t * nb_days * nb_weeks + d * nb_weeks + w];
+									e_tdw.push_back(e);
+								}
+							}
+						}
+					}
+				}
+
+				// Store x variables in Instance object
+				{
+					auto& data_mutable = const_cast<Instance&>(data);
+					data_mutable.set_solution_x(x_tmdw);
+				}
+
+				// Write solution to file
+				{
+					std::ofstream solfile;
+					solfile.open("solution_IP_model_allocation.txt");
+					solfile << "\nx_tmdw  (opgehaalde hoeveelheid)";
+					for (int t = 0; t < nb_waste_types; ++t) {
+						for (int m = 0; m < nb_zones; ++m) {
+							for (int d = 0; d < nb_days; ++d) {
+								for (int w = 0; w < nb_weeks; ++w) {
+									double val = x_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
+									if (val > 0.000001) {
+										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": x = " << val;
+									}									
+								}
+							}
+						}
+					}
+					solfile << "\n\ny_tmdw  (wel of niet opgehaald)";
+					for (int t = 0; t < nb_waste_types; ++t) {
+						for (int m = 0; m < nb_zones; ++m) {
+							for (int d = 0; d < nb_days; ++d) {
+								for (int w = 0; w < nb_weeks; ++w) {
+									int val = y_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
+									if (val > 0) {
+										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": y = " << val;
+									}
+								}
+							}
+						}
+					}
+					solfile << "\n\nz_tmdw  (andere ophaaldag dan huidig)";
+					for (int t = 0; t < nb_waste_types; ++t) {
+						for (int m = 0; m < nb_zones; ++m) {
+							for (int d = 0; d < nb_days; ++d) {
+								for (int w = 0; w < nb_weeks; ++w) {
+									int val = z_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
+									if (val > 0) {
+										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": z = " << val;
+									}
+								}
+							}
+						}
+					}
+					solfile << "\n\ne_tdw  (afwijkingen doelfunctie)";
+					for (int t = 0; t < nb_waste_types; ++t) {
+						for (int d = 0; d < nb_days; ++d) {
+							for (int w = 0; w < nb_weeks; ++w) {
+								double val = e_tdw[t * nb_days * nb_weeks + d * nb_weeks + w];
+								if (val > 0.000001) {
+									solfile << "\n" << data.waste_type(t) << ", " << data.day_name(d) << ", week " << w + 1 << ": e = " << val;
+								}
+							}
+						}
+					}
+
+					solfile << "\n\nObjective value = " << objval;
+
+					solfile.flush();
+				}
 			}
 		}
-
-
 	}
 
 	void IP_model_allocation::clear_cplex()

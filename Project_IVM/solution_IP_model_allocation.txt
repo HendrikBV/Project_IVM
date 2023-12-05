@@ -1,0 +1,34 @@
+
+x_tmdw  (opgehaalde hoeveelheid)
+GFT, Z1, maandag, week 1: x = 0.3
+GFT, Z2, dinsdag, week 1: x = 0.5
+GFT, Z3, maandag, week 1: x = 0.8
+GFT, Z4, dinsdag, week 1: x = 0.4
+restafval, Z1, maandag, week 1: x = 2.5
+restafval, Z2, maandag, week 1: x = 1.8
+restafval, Z3, dinsdag, week 1: x = 2.1
+restafval, Z4, dinsdag, week 1: x = 1.9
+
+y_tmdw  (wel of niet opgehaald)
+GFT, Z1, maandag, week 1: y = 1
+GFT, Z2, dinsdag, week 1: y = 1
+GFT, Z3, maandag, week 1: y = 1
+GFT, Z4, dinsdag, week 1: y = 1
+restafval, Z1, maandag, week 1: y = 1
+restafval, Z2, maandag, week 1: y = 1
+restafval, Z3, dinsdag, week 1: y = 1
+restafval, Z4, dinsdag, week 1: y = 1
+
+z_tmdw  (andere ophaaldag dan huidig)
+GFT, Z2, maandag, week 1: z = 1
+GFT, Z2, dinsdag, week 1: z = 1
+GFT, Z3, maandag, week 1: z = 1
+GFT, Z3, dinsdag, week 1: z = 1
+
+e_tdw  (afwijkingen doelfunctie)
+GFT, maandag, week 1: e = 0.1
+GFT, dinsdag, week 1: e = 0.1
+restafval, maandag, week 1: e = 0.15
+restafval, dinsdag, week 1: e = 0.15
+
+Objective value = 0.5

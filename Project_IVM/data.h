@@ -1,3 +1,9 @@
+
+/*!
+ *  @file       Data.h
+ *  @brief      Defines data for the IVM scheduling problem
+ */
+
 #pragma once
 #ifndef DATA_H
 #define DATA_H
@@ -18,6 +24,11 @@ namespace IVM
 		 *	@brief To switch between indices and names for the days
 		 */
 		const std::unordered_map<std::string, int> _dag_naam_index{ {"maandag", 0}, {"dinsdag", 1}, {"woensdag", 2}, {"donderdag", 3}, {"vrijdag", 4} };
+
+		/*!
+		 *	@brief To switch between indices and names for the days
+		 */
+		const std::unordered_map<int, std::string> _naam_dag_index{ {0, "maandag"}, {1, "dinsdag"}, {2, "woensdag"}, {3, "donderdag"}, {4, "vrijdag"} };
 
 		/*!
 		 *	@brief The name of the instance
@@ -143,6 +154,12 @@ namespace IVM
 		 */
 		std::vector<Zone> _zones;
 
+		/*!
+		 *	@brief	The solution from the allocation model that serves as
+		 *			input to the routing model 
+		 */
+		std::vector<double> _sol_alloc_x_tmdw;
+
 	public:
 		/*!
 		 *	@brief Obtain data from an XML file
@@ -163,6 +180,7 @@ namespace IVM
 		size_t nb_weeks() const { return _nb_weeks; }
 		size_t max_visits() const { return _max_visits; }
 
+		const std::string& day_name(size_t index) const { return _naam_dag_index.at(index); }
 		const std::string& waste_type(size_t index) const { return _waste_types[index]; }
 		const std::string& zone_name(size_t index) const { return _zones[index]._name; }
 		const std::string& truck_type(size_t index) const { return _trucks[index]._name; }
@@ -177,6 +195,14 @@ namespace IVM
 		double time_unloading(const std::string& waste_type) const { return _waste_type_unloading_time.at(waste_type); }
 		double max_driving_time(size_t truck_type) const { return _trucks[truck_type]._max_hours; }
 		double capacity(size_t truck_type, const std::string& waste_type) const { return _trucks[truck_type]._capacities.at(waste_type); }
+
+		double x_tmdw(size_t waste_type, size_t zone, size_t day, size_t week) const { return _sol_alloc_x_tmdw[waste_type * nb_zones() * _nb_days * _nb_weeks + zone * _nb_days * _nb_weeks + day * _nb_weeks + week]; }
+		
+		/*!
+		 *	@brief	Set the solution from the allocation model
+		 *  @param	x	The values of the x_tmdw variables
+		 */
+		void set_solution_x(const std::vector<double>& x) { _sol_alloc_x_tmdw = x; }
 	};
 
 	///////////////////////////////////////////////////////////////////////////

@@ -1,3 +1,9 @@
+
+/*!
+ *  @file       Models.h
+ *  @brief      Defines the IP models for the IVM scheduling problem
+ */
+
 #pragma once
 #ifndef MODELS_H
 #define MODELS_H
@@ -10,7 +16,7 @@
 
 namespace IVM
 {
-	// forward declaration
+	// forward declarations
 	class Instance;
 
 
@@ -134,6 +140,8 @@ namespace IVM
 		 *	@brief The available number of trucks
 		 */
 		const size_t _max_nb_trucks = 10;
+
+		std::vector<double> _Q_tmd;
 
 	public:
 		/*!
