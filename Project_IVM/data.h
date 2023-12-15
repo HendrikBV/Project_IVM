@@ -189,6 +189,7 @@ namespace IVM
 		bool current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const;
 		size_t nb_pickups_current_calendar() const;
 		double operating_costs(size_t truck_type) const { return _trucks[truck_type]._operating_costs; }
+		double fixed_costs(size_t truck_type) const { return _trucks[truck_type]._fixed_costs; }
 		double time_driving_zone_collectionpoint(size_t zone, const std::string& collection_point) const { return _zones[zone]._driving_time.at(collection_point); }
 		double time_driving_zone_depot(size_t zone) const { return _zones[zone]._driving_time.at("Depot"); }
 		double time_pickup(size_t zone, const std::string& waste_type) const { return _zones[zone]._collection_times.at(waste_type); }

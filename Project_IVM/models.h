@@ -141,7 +141,15 @@ namespace IVM
 		 */
 		const size_t _max_nb_trucks = 10;
 
+		/*!
+		 *	@brief The amount of waste of each type to pick up at every zone on each day
+		 */
 		std::vector<double> _Q_tmd;
+
+		/*!
+		 *	@brief Indicates whether we minimize the number of trucks in the objective function or not
+		 */
+		bool _include_nb_truck_objective = false;
 
 	public:
 		/*!
