@@ -197,8 +197,8 @@ namespace IVM
 		double max_driving_time(size_t truck_type) const { return _trucks[truck_type]._max_hours; }
 		double capacity(size_t truck_type, const std::string& waste_type) const { return _trucks[truck_type]._capacities.at(waste_type); }
 
-		double x_tmdw(size_t waste_type, size_t zone, size_t day, size_t week) const { return _sol_alloc_x_tmdw[waste_type * nb_zones() * _nb_days * _nb_weeks + zone * _nb_days * _nb_weeks + day * _nb_weeks + week]; }
-		
+		double x_tmdw(size_t waste_type, size_t zone, size_t day, size_t week) const;
+
 		/*!
 		 *	@brief	Set the solution from the allocation model
 		 *  @param	x	The values of the x_tmdw variables

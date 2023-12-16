@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <random>
 #include <chrono>
+#include <cassert>
 
 namespace IVM
 {
@@ -258,6 +259,17 @@ namespace IVM
 
 		return result;
 	}
+
+	double Instance::x_tmdw(size_t waste_type, size_t zone, size_t day, size_t week) const
+	{ 
+		assert(waste_type < _waste_types.size());
+		assert(zone < _zones.size());
+		assert(day < _nb_days);
+		assert(week < _nb_weeks);
+
+		return _sol_alloc_x_tmdw.at(waste_type * _zones.size() * _nb_days * _nb_weeks + zone * _nb_days * _nb_weeks + day * _nb_weeks + week);
+	}
+
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 

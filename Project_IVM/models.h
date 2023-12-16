@@ -14,6 +14,8 @@
 #include <vector>
 #include <unordered_map>
 
+
+
 namespace IVM
 {
 	// forward declarations
@@ -128,8 +130,9 @@ namespace IVM
 		/*!
 		 *	@brief Solve the CPLEX model
 		 *  @param	data	The problem data
+		 *  @param	day		The day for which to solve the routing problem
 		 */
-		void solve_problem(const Instance& data);
+		void solve_problem(const Instance& data, size_t day);
 
 		/*!
 		 *	@brief Release CPLEX memory
@@ -142,14 +145,56 @@ namespace IVM
 		const size_t _max_nb_trucks = 10;
 
 		/*!
-		 *	@brief The amount of waste of each type to pick up at every zone on each day
+		 *	@brief The maximum number of segments in a route
 		 */
-		std::vector<double> _Q_tmd;
+		const size_t _max_nb_segments = 10;
+
+		/*!
+		 *	@brief Auxiliary function to give the correct index for the x variables
+		 *  @param data	The problem data
+		 *  @param q	index for the truck type
+		 *  @param v	index for the vehicle
+		 *  @param i	index for the origin location
+		 *  @param j	index for the destination location
+		 *  @param k	index for the route segment
+		 *  @returns	the index of the x_qvijk variable in the model
+		 */
+		size_t _index_x_qvijk(const Instance& data, int q, int v, int i, int j, int k) const;
+
+		/*!
+		 *	@brief Auxiliary function to give the correct index for the w variables
+		 *  @param data	The problem data
+		 *  @param t	index for the waste type
+		 *  @param q	index for the truck type
+		 *  @param v	index for the vehicle
+		 *  @param i	index for the location
+		 *  @param k	index for the route segment
+		 *  @returns	the index of the w_tqvik variable in the model
+		 */
+		size_t _index_w_tqvik(const Instance& data, int t, int q, int v, int i_zone, int k) const;
+
+		/*!
+		 *	@brief Auxiliary function to give the correct index for the y variables
+		 *  @param data	The problem data
+		 *  @param q	index for the truck type
+		 *  @param v	index for the vehicle
+		 *  @returns	the index of the y_qv variable in the model
+		 */
+		size_t _index_y_qv(const Instance& data, int q, int v) const;
+
+		/*!
+		 *	@brief Auxiliary function to give the correct index for the beta variables
+		 *  @param data	The problem data
+		 *  @param q	index for the truck type
+		 *  @param v	index for the vehicle
+		 *  @returns	the index of the beta_qv variable in the model
+		 */
+		size_t _index_beta_qv(const Instance& data, int q, int v) const;
 
 		/*!
 		 *	@brief Indicates whether we minimize the number of trucks in the objective function or not
 		 */
-		bool _include_nb_truck_objective = false;
+		bool _include_nb_truck_objective = true;
 
 	public:
 		/*!

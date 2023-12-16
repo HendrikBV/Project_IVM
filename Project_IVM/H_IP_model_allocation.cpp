@@ -813,7 +813,7 @@ namespace IVM
 
 
 		// Optimize the problem
-		std::cout << "\n\n\nIP_model_allocation: CPLEX is solving the problem ...\n";
+		std::cout << "\n\n\nIP_model_allocation: CPLEX is solving the problem ...\n\n";
 		auto start_time = std::chrono::system_clock::now();
 
 		status = CPXmipopt(env, problem);
@@ -864,6 +864,8 @@ namespace IVM
 						for (int d = 0; d < nb_days; ++d) {
 							for (int w = 0; w < nb_weeks; ++w) {
 								double x = solution_problem[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
+								if (x < 0.00001)
+									x = 0;
 								x_tmdw.push_back(x);
 
 								int y = static_cast<int>(solution_problem[nb_waste_types * nb_zones * nb_days * nb_weeks + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w] + 0.1);
