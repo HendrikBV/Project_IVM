@@ -1,68 +1,29 @@
 
-Objective value = 2466.5
+Objective value = 2541.5
 
 
 
-Vrachtwagen type 1, nummer 4
+Vrachtwagen type 1, nummer 7
+Rijtijd: 7.33
+Ophalingen:
+	Z1, GFT, segment 3, hoeveelheid = 0.3
+	Z3, GFT, segment 1, hoeveelheid = 0.8
+	Z1, restafval, segment 3, hoeveelheid = 1.805
+Route:
+	segment 1: van depot naar Z3
+	segment 2: van Z3 naar CP1
+	segment 3: van CP1 naar Z1
+	segment 4: van Z1 naar CP1
+	segment 5: van CP1 naar depot
+
+Vrachtwagen type 2, nummer 3
 Rijtijd: 7.5
 Ophalingen:
-	Z1, GFT, segment 1, hoeveelheid = 0.03
-	Z1, GFT, segment 2, hoeveelheid = 0.03
-	Z1, GFT, segment 3, hoeveelheid = 0.03
-	Z1, GFT, segment 4, hoeveelheid = 0.03
-	Z1, GFT, segment 5, hoeveelheid = 0.03
-	Z1, GFT, segment 6, hoeveelheid = 0.03
-	Z1, GFT, segment 7, hoeveelheid = 0.03
-	Z1, GFT, segment 8, hoeveelheid = 0.03
-	Z1, GFT, segment 9, hoeveelheid = 0.03
-	Z1, GFT, segment 10, hoeveelheid = 0.03
-	Z3, GFT, segment 1, hoeveelheid = 0.0656522
-	Z3, GFT, segment 2, hoeveelheid = 0.0656522
-	Z3, GFT, segment 3, hoeveelheid = 0.0656522
-	Z3, GFT, segment 4, hoeveelheid = 0.0656522
-	Z3, GFT, segment 5, hoeveelheid = 0.0656522
-	Z3, GFT, segment 6, hoeveelheid = 0.0656522
-	Z3, GFT, segment 7, hoeveelheid = 0.0656522
-	Z3, GFT, segment 8, hoeveelheid = 0.0656522
-	Z3, GFT, segment 9, hoeveelheid = 0.0656522
-	Z3, GFT, segment 10, hoeveelheid = 0.0656522
-	Z2, restafval, segment 1, hoeveelheid = 0.18
-	Z2, restafval, segment 2, hoeveelheid = 0.18
-	Z2, restafval, segment 3, hoeveelheid = 0.18
-	Z2, restafval, segment 4, hoeveelheid = 0.18
-	Z2, restafval, segment 5, hoeveelheid = 0.18
-	Z2, restafval, segment 6, hoeveelheid = 0.18
-	Z2, restafval, segment 7, hoeveelheid = 0.18
-	Z2, restafval, segment 8, hoeveelheid = 0.18
-	Z2, restafval, segment 9, hoeveelheid = 0.18
-	Z2, restafval, segment 10, hoeveelheid = 0.18
+	Z1, restafval, segment 3, hoeveelheid = 0.695
+	Z2, restafval, segment 1, hoeveelheid = 1.8
 Route:
-	segment 1: van depot naar CP1
-	segment 2: van CP1 naar depot
-
-Vrachtwagen type 1, nummer 8
-Rijtijd: 5.83
-Ophalingen:
-	Z3, GFT, segment 1, hoeveelheid = 0.0143478
-	Z3, GFT, segment 2, hoeveelheid = 0.0143478
-	Z3, GFT, segment 3, hoeveelheid = 0.0143478
-	Z3, GFT, segment 4, hoeveelheid = 0.0143478
-	Z3, GFT, segment 5, hoeveelheid = 0.0143478
-	Z3, GFT, segment 6, hoeveelheid = 0.0143478
-	Z3, GFT, segment 7, hoeveelheid = 0.0143478
-	Z3, GFT, segment 8, hoeveelheid = 0.0143478
-	Z3, GFT, segment 9, hoeveelheid = 0.0143478
-	Z3, GFT, segment 10, hoeveelheid = 0.0143478
-	Z1, restafval, segment 1, hoeveelheid = 0.25
-	Z1, restafval, segment 2, hoeveelheid = 0.25
-	Z1, restafval, segment 3, hoeveelheid = 0.25
-	Z1, restafval, segment 4, hoeveelheid = 0.25
-	Z1, restafval, segment 5, hoeveelheid = 0.25
-	Z1, restafval, segment 6, hoeveelheid = 0.25
-	Z1, restafval, segment 7, hoeveelheid = 0.25
-	Z1, restafval, segment 8, hoeveelheid = 0.25
-	Z1, restafval, segment 9, hoeveelheid = 0.25
-	Z1, restafval, segment 10, hoeveelheid = 0.25
-Route:
-	segment 1: van depot naar CP1
-	segment 2: van CP1 naar depot
+	segment 1: van depot naar Z2
+	segment 2: van Z2 naar CP1
+	segment 3: van CP1 naar Z1
+	segment 4: van Z1 naar CP1
+	segment 5: van CP1 naar depot
