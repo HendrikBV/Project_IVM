@@ -373,3 +373,6 @@ FodyWeavers.xsd
 
 # Ignore all xlsx-files
 *.xlsx
+
+# Ignore all files in map Jens
+Jens/
