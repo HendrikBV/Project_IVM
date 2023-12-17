@@ -21,13 +21,13 @@
     <ClCompile Include="data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H_IP_model_allocation.cpp">
+    <ClCompile Include="IP_model_allocation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tinyxml2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="H_IP_model_routing.cpp">
+    <ClCompile Include="IP_model_routing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
