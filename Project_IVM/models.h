@@ -18,9 +18,8 @@
 
 namespace IVM
 {
-	// forward declarations
+	// forward declaration
 	class Instance;
-
 
 
 	/*!

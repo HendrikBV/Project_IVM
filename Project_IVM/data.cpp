@@ -9,6 +9,10 @@
 
 namespace IVM
 {
+	///////////////////////////////////////////
+	///			  Problem data  			///
+	///////////////////////////////////////////
+
 	void Instance::read_data_xml(const std::string& filename)
 	{
 		std::string text;
@@ -226,6 +230,8 @@ namespace IVM
 		_collection_points.clear();
 		_trucks.clear();
 		_zones.clear();
+
+		_sol_alloc_x_tmdw.clear();
 	}
 
 	bool Instance::current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const
@@ -270,8 +276,13 @@ namespace IVM
 		return _sol_alloc_x_tmdw.at(waste_type * _zones.size() * _nb_days * _nb_weeks + zone * _nb_days * _nb_weeks + day * _nb_weeks + week);
 	}
 
-
 	///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+	///////////////////////////////////////////
+	///			  Instance Generator		///
+	///////////////////////////////////////////
 
 	void Instance_Generator::generate_xml()
 	{
@@ -292,12 +303,12 @@ namespace IVM
 		const double max_time = 7.5;
 		const double unloading_time = 0.25; // Jens
 
-		double fixedcosts = dist_costs(engine) * 100;
-		double operatingcosts = dist_costs(engine) * 10;
-		double capacity_truckgft_gft = 10;
-		double capacity_truckgft_rest = 12.5;
-		double capacity_truckrest_gft = 0;
-		double capacity_truckrest_rest = 25;
+		const double fixedcosts = dist_costs(engine) * 100;
+		const double operatingcosts = dist_costs(engine) * 10;
+		const double capacity_truckgft_gft = 10;
+		const double capacity_truckgft_rest = 12.5;
+		const double capacity_truckrest_gft = 0;
+		const double capacity_truckrest_rest = 25;
 		
 
 		std::ofstream file;

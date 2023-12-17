@@ -1,7 +1,7 @@
 
 /*!
  *  @file       Data.h
- *  @brief      Defines data for the IVM scheduling problem
+ *  @brief      Defines the data for the IVM scheduling problem
  */
 
 #pragma once
@@ -172,31 +172,174 @@ namespace IVM
 		 */
 		void clear_data();
 
+		/*!
+		 *	@brief Get the number of waste types
+		 *  @returns	The number of waste types
+		 */
 		size_t nb_waste_types() const { return _waste_types.size(); }
+
+		/*!
+		 *	@brief Get the number of truck types
+		 *  @returns	The number of truck types
+		 */
 		size_t nb_truck_types() const { return _trucks.size(); }
+
+		/*!
+		 *	@brief Get the number of zones
+		 *  @returns	The number of zones
+		 */
 		size_t nb_zones() const { return _zones.size(); }
+
+		/*!
+		 *	@brief Get the number of collection points
+		 *  @returns	The number of collection points
+		 */
 		size_t nb_collection_points() const { return _collection_points.size(); }
+
+		/*!
+		 *	@brief Get the number of days per week
+		 *  @returns	The number of days 
+		 */
 		size_t nb_days() const { return _nb_days; }
+
+		/*!
+		 *	@brief Get the number of weeks
+		 *  @returns	The number of weeks
+		 */
 		size_t nb_weeks() const { return _nb_weeks; }
+
+		/*!
+		 *	@brief Get the maximum number of visits to every zone
+		 *  @returns	The maximum number of visits
+		 */
 		size_t max_visits() const { return _max_visits; }
 
+		/*!
+		 *	@brief Get the name of a given day
+		 *  @param	index	The index for the day
+		 *  @returns	The name of the day
+		 */
 		const std::string& day_name(size_t index) const { return _naam_dag_index.at(index); }
+
+		/*!
+		 *	@brief Get the name of a waste type
+		 *  @param	index	The index for the waste type
+		 *  @returns	The name of the waste type
+		 */
 		const std::string& waste_type(size_t index) const { return _waste_types[index]; }
+
+		/*!
+		 *	@brief Get the name of a zone
+		 *  @param	index	The index for the zone
+		 *  @returns	The name of the zone
+		 */
 		const std::string& zone_name(size_t index) const { return _zones[index]._name; }
+
+		/*!
+		 *	@brief Get the name of a truck type
+		 *  @param	index	The index for the truck type
+		 *  @returns	The name of the truck type
+		 */
 		const std::string& truck_type(size_t index) const { return _trucks[index]._name; }
+
+		/*!
+		 *	@brief Get the name of a collection point
+		 *  @param	index	The index for the collection point
+		 *  @returns	The name of the collection point
+		 */
 		const std::string& collection_point(size_t index) const { return _collection_points[index]; }
+
+		/*!
+		 *	@brief Get the demand for a given waste type in a given zone
+		 *  @param	zone	The index for the zone
+		 *  @param	waste_type	The name of the waste type
+		 *  @returns	The demand in the given zone for the given waste type
+		 */
 		double demand(int zone, const std::string& waste_type) const { return _zones[zone]._demands.at(waste_type); }
+
+		/*!
+		 *	@brief Check whether there is a pickup on a certain day of a given week for a given waste type in a given zone
+		 *  @param	zone	The index for the zone
+		 *  @param	waste_type	The name of the waste type
+		 *  @param	day	The index for the day
+		 *  @param	week	The index for the week
+		 *  @returns	True if there is a pickup on that day, false if not
+		 */
 		bool current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const;
+
+		/*!
+		 *	@brief Get the number of pickups in the current calendar
+		 *  @returns	The number of pickups
+		 */
 		size_t nb_pickups_current_calendar() const;
+
+		/*!
+		 *	@brief Get the operating costs per hour for a truck of a given type
+		 *  @param	truck_type	The index for the truck type
+		 *  @returns	The operating costs for that truck type
+		 */
 		double operating_costs(size_t truck_type) const { return _trucks[truck_type]._operating_costs; }
+
+		/*!
+		 *	@brief Get the name of a waste type
+		 *  @param	index	The index for the waste type
+		 *  @returns	The name of the waste type
+		 */
 		double fixed_costs(size_t truck_type) const { return _trucks[truck_type]._fixed_costs; }
+
+		/*!
+		 *	@brief Get the driving time from a given zone to a given collection point
+		 *  @param	index	The index for the zone
+		 *  @param	collection_point	The name of the collection point
+		 *  @returns	The driving time
+		 */
 		double time_driving_zone_collectionpoint(size_t zone, const std::string& collection_point) const { return _zones[zone]._driving_time.at(collection_point); }
+
+		/*!
+		 *	@brief Get the driving time from a given zone to the depot
+		 *  @param	index	The index for the zone
+		 *  @returns	The driving time
+		 */
 		double time_driving_zone_depot(size_t zone) const { return _zones[zone]._driving_time.at("Depot"); }
+
+		/*!
+		 *	@brief Get the pickup time per unit of waste for a given type of waste at a given zone
+		 *  @param	index	The index for the zone
+		 *  @param	waste_type	The name of the waste time
+		 *  @returns	The pickup time
+		 */
 		double time_pickup(size_t zone, const std::string& waste_type) const { return _zones[zone]._collection_times.at(waste_type); }
+
+		/*!
+		 *	@brief Get the (fixed) unloading time for a given type of waste 
+		 *  @param	waste_type	The name of the type of waste
+		 *  @returns	The unloading time
+		 */
 		double time_unloading(const std::string& waste_type) const { return _waste_type_unloading_time.at(waste_type); }
+
+		/*!
+		 *	@brief Get the maximum driving time for a given type of truck
+		 *  @param	index	The index for the type of truck
+		 *  @returns	The the maximum driving time
+		 */
 		double max_driving_time(size_t truck_type) const { return _trucks[truck_type]._max_hours; }
+
+		/*!
+		 *	@brief Get the capacity of a given type of truck for a given type of waste
+		 *  @param	index	The index for the type of truck
+		 *  @param	waste_type	The name of the type of waste
+		 *  @returns	The capacity
+		 */
 		double capacity(size_t truck_type, const std::string& waste_type) const { return _trucks[truck_type]._capacities.at(waste_type); }
 
+		/*!
+		 *	@brief Get the solution from the allocation model
+		 *  @param	waste_type	Index of the waste type
+		 *  @param	zone	Index of the zone
+		 *  @param	day	Index of the day
+		 *  @param	week	Index of the week
+		 *  @returns	The amount of waste of the given type to pick up on the given day and week in the given zone
+		 */
 		double x_tmdw(size_t waste_type, size_t zone, size_t day, size_t week) const;
 
 		/*!

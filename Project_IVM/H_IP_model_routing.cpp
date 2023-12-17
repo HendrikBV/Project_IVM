@@ -37,7 +37,6 @@ namespace IVM
 		}
 	}
 
-
 	size_t IP_model_routing::_index_x_qvijk(const Instance& data, int q, int v, int i, int j, int k) const
 	{
 		const size_t nb_locations = data.nb_zones() + 1 + data.nb_collection_points();
@@ -54,9 +53,6 @@ namespace IVM
 
 	size_t IP_model_routing::_index_w_tqvik(const Instance& data, int t, int q, int v, int i_zone, int k) const
 	{
-		if (i_zone >= data.nb_zones())
-			throw std::runtime_error("Error in function IP_model_routing::_index_w_tqvik(). Index for zone exceeds nb_zones");
-
 		const size_t nb_locations = data.nb_zones() + 1 + data.nb_collection_points();
 		const size_t startindex = data.nb_truck_types() * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments;
 
@@ -281,7 +277,6 @@ namespace IVM
 		}
 
 		nb_variables = CPXgetnumcols(env, problem);
-
 
 
 
@@ -877,7 +872,6 @@ namespace IVM
 							}
 
 							// - y_qv
-							for (int j = 0; j < nb_locations; ++j)
 							{
 								const size_t index = _index_y_qv(data, q, v);
 								if (index >= nb_variables)
@@ -935,9 +929,7 @@ namespace IVM
 		std::unique_ptr<double[]> solution_problem;
 		double objval;
 
-		//status = CPXsetintparam(env, CPXPARAM_Preprocessing_Presolve, CPX_OFF);
-
-		status = CPXreadcopyprob(env, problem, "IP_model_routing.lp", NULL); ///> Dit werkt wel, maar probleem rechtstreeks geeft error
+		status = CPXreadcopyprob(env, problem, "IP_model_routing.lp", NULL); /// Dit werkt wel, maar probleem rechtstreeks geeft error
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);

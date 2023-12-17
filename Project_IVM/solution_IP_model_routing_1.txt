@@ -1,29 +1,40 @@
 
-Objective value = 2541.5
+Objective value = 3343.5
 
 
 
 Vrachtwagen type 1, nummer 7
-Rijtijd: 7.33
+Rijtijd: 7.48
 Ophalingen:
-	Z1, GFT, segment 3, hoeveelheid = 0.3
-	Z3, GFT, segment 1, hoeveelheid = 0.8
-	Z1, restafval, segment 3, hoeveelheid = 1.805
+	Z30, restafval, segment 3, hoeveelheid = 2.1
+	Z34, restafval, segment 1, hoeveelheid = 0.7
 Route:
-	segment 1: van depot naar Z3
-	segment 2: van Z3 naar CP1
-	segment 3: van CP1 naar Z1
-	segment 4: van Z1 naar CP1
-	segment 5: van CP1 naar depot
+	segment 1: van depot naar Z34
+	segment 2: van Z34 naar CP3
+	segment 3: van CP3 naar Z30
+	segment 4: van Z30 naar CP3
+	segment 5: van CP3 naar depot
 
-Vrachtwagen type 2, nummer 3
+Vrachtwagen type 2, nummer 2
 Rijtijd: 7.5
 Ophalingen:
-	Z1, restafval, segment 3, hoeveelheid = 0.695
-	Z2, restafval, segment 1, hoeveelheid = 1.8
+	Z21, restafval, segment 1, hoeveelheid = 1.32692
+	Z32, restafval, segment 3, hoeveelheid = 1.4
 Route:
-	segment 1: van depot naar Z2
-	segment 2: van Z2 naar CP1
-	segment 3: van CP1 naar Z1
-	segment 4: van Z1 naar CP1
+	segment 1: van depot naar Z21
+	segment 2: van Z21 naar CP3
+	segment 3: van CP3 naar Z32
+	segment 4: van Z32 naar CP1
 	segment 5: van CP1 naar depot
+
+Vrachtwagen type 2, nummer 9
+Rijtijd: 6.47
+Ophalingen:
+	Z21, restafval, segment 3, hoeveelheid = 0.473077
+	Z24, restafval, segment 1, hoeveelheid = 1.9
+Route:
+	segment 1: van depot naar Z24
+	segment 2: van Z24 naar CP2
+	segment 3: van CP2 naar Z21
+	segment 4: van Z21 naar CP2
+	segment 5: van CP2 naar depot
