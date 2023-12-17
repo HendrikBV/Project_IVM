@@ -1,1 +1,5 @@
 # Project_IVM
+
+Deze code implementeert een optimalisatiemodel voor de bepaling van de beste routes voor afvalophaling.
+
+De data worden via een XML-bestand ingelezen. In een eerste stap wordt een geheeltallig lineair optimalisatiemodel opgelost om te bepalen in welke zones (gemeentes) op welke dagen welk type afval wordt opgehaald. Het doel van dit model is om de afvalophaling zo gelijk mogelijk te spreiden over de verschillende dagen, zodat het aantal benodigde vrachtwagens geminimaliseerd wordt. In een tweede stap wordt een geheeltallig lineair optimalisatiemodel opgelost om voor elke dag de routes van de vrachtwagens te bepalen die de ophaling doen. Dit model werkt met de dagen en ophaalhoeveelheiden bepaald in het vorige model. Vervolgens probeert het routes te vinden om aan deze beperkingen te voldoen met zo kort mogelijke rijtijden en zo weinig mogelijk vrachtwagens.
