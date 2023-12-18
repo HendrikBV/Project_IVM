@@ -211,6 +211,11 @@ namespace IVM
 		 */
 		bool _include_nb_truck_objective = true;
 
+		/*!
+		 *	@brief The maximum computation time (in seconds)
+		 */
+		double _max_computation_time = 600;
+
 	public:
 		/*!
 		 *	@brief Build and solve the CPLEX model

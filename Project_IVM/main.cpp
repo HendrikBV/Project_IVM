@@ -22,7 +22,7 @@ int main()
 		model_allocation.set_fraction_allowed_deviations(1);
 		model_allocation.run(data);
 
-		for (int d = 4; d < data.nb_days() * data.nb_weeks(); ++d)
+		for (int d = 0; d < data.nb_days() * data.nb_weeks(); ++d)
 		{
 			model_routing.run(data, d);
 		}

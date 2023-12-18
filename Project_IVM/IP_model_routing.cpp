@@ -948,6 +948,14 @@ namespace IVM
 			throw std::runtime_error("Error in function IP_model_routing::solve_problem(). \nCouldn't read problem from lp-file. \nReason: " + std::string(error_text));
 		}
 
+		// Set allowed computation time
+		status = CPXsetdblparam(env, CPXPARAM_TimeLimit, _max_computation_time);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_model_allocation::solve_problem(). \nCouldn't set time limit. \nReason: " + std::string(error_text));
+		}
+
 		// Assign memory for solution
 		const int numvar = CPXgetnumcols(env, problem);
 		solution_problem = std::make_unique<double[]>(numvar);
@@ -980,7 +988,7 @@ namespace IVM
 		{
 			std::cout << "\n\nDone solving ... \n\nSolution status: " << solstat_text;
 
-			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL)
+			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL || solstat == CPXMIP_TIME_LIM_FEAS)
 			{
 				std::cout << "\nObjval = " << objval;
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
