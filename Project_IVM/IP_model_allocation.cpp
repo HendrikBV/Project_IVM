@@ -40,7 +40,7 @@ namespace IVM
 		}
 
 		// turn output to screen on/off
-		status = CPXsetintparam(env, CPX_PARAM_SCRIND, CPX_ON);
+		status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_ON);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
@@ -73,9 +73,20 @@ namespace IVM
 
 		// create the problem
 		problem = CPXcreateprob(env, &status, "IP_model_allocation");
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't create problem. \nReason: " + std::string(error_text));
+		}
 
 		// problem is minimization
 		status = CPXchgobjsen(env, problem, CPX_MIN);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change objective to minimization. \nReason: " + std::string(error_text));
+		}
+
 
 		// data 
 		const size_t nb_types = data.nb_waste_types();
