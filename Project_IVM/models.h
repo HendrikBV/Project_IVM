@@ -81,6 +81,11 @@ namespace IVM
 		 */
 		int _scenario = 0;
 
+		/*!
+		 *	@brief The maximum computation time (in seconds)
+		 */
+		double _max_computation_time = 60;
+
 	public:
 		/*!
 		 *	@brief Set the fraction of deviations that is allowed compared to the current calendar

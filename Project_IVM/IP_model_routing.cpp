@@ -553,7 +553,7 @@ namespace IVM
 				++nb_constraints;
 
 				int dayweek = day % nb_days;
-				int week = day / nb_weeks; // integer division
+				int week = day / nb_days; // integer division
 
 				rhs[0] = data.x_tmdw(t, m, dayweek, week);
 				sense[0] = 'E';
