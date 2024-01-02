@@ -1,5 +1,6 @@
 #include "data.h"
 #include "models.h"
+#include "auxiliaries.h"
 #include <iostream>
 #include <exception>
 #include <chrono>
@@ -16,7 +17,7 @@ int main()
 
 	try 
 	{
-		data.read_data_xml("large_instance.xml");
+		data.read_data_xml("IVM_perceel2.xml");
 
 		model_allocation.set_scenario(IVM::IP_model_allocation::FREE_WEEK_FREE_DAY);
 		model_allocation.set_fraction_allowed_deviations(1);

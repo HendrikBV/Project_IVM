@@ -157,7 +157,7 @@ namespace IVM
 		/*!
 		 *	@brief The available number of trucks
 		 */
-		const size_t _max_nb_trucks = 10;
+		const size_t _max_nb_trucks = 30;
 
 		/*!
 		 *	@brief The maximum number of segments in a route
