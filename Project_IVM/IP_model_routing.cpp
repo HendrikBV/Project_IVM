@@ -1058,6 +1058,7 @@ namespace IVM
 
 			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL || solstat == CPXMIP_TIME_LIM_FEAS)
 			{
+				_objective_value = objval;
 				std::cout << "\nObjval = " << objval;
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
 
@@ -1233,7 +1234,7 @@ namespace IVM
 					catch (const std::exception& e)
 					{
 						std::cout << "\n\n\nError in function IP_model_routing::solve_problem()."
-							<< "\nProblem with writing alternative solution representation to file.\n" 
+							<< "\nProblem with writing solution representation to file.\n" 
 							<< e.what()
 							<< "\n\n\n";
 					}
@@ -1276,11 +1277,14 @@ namespace IVM
 													std::string wastetype;
 													double wval = 0;
 													for (int t = 0; t < nb_waste_types; ++t) {
-														wval = w_tqvik.at(t * nb_truck_types * _max_nb_trucks * nb_zones * _max_nb_segments + q * _max_nb_trucks * nb_zones * _max_nb_segments + v * nb_zones * _max_nb_segments + j * _max_nb_segments + k);
-														if (wval > 0.000001) {
-															wastetype = data.waste_type(t);
-															break; // keep value of wval
-															// more than one type of waste possible at same pickup???
+														if (j < nb_zones) { // w_tqvik only exists for zones, not depot or collection points (j -> nb_locations)
+															wval = w_tqvik.at(t * nb_truck_types * _max_nb_trucks * nb_zones * _max_nb_segments + q * _max_nb_trucks * nb_zones * _max_nb_segments + v * nb_zones * _max_nb_segments + j * _max_nb_segments + k);
+
+															if (wval > 0.000001) {
+																wastetype = data.waste_type(t);
+																break; // keep value of wval
+																// more than one type of waste possible at same pickup???
+															}
 														}
 													}
 

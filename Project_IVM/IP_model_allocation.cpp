@@ -926,6 +926,7 @@ namespace IVM
 
 			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL || solstat == CPXMIP_TIME_LIM_FEAS)
 			{
+				_objective_value = objval;
 				std::cout << "\nObjval = " << objval;
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
 
