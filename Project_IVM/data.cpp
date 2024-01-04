@@ -15,7 +15,6 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
-#include <random>
 #include <chrono>
 #include <cassert>
 
@@ -134,14 +133,31 @@ namespace IVM
 			}
 			else if (text == "Collectiepunt")
 			{
+				_collection_points.push_back(Collection_Point());
+
 				std::string naamc;
 				double lostijd;
 
 				if (child->Attribute("naam") == nullptr)
 					throw std::runtime_error("Error in function Instance::read_data(). Collectiepunt does not contain an attribute \"naam\"");
 				naamc = child->Attribute("naam");
+				_collection_points.back()._name = naamc;
 
-				_collection_points.push_back(naamc);
+				tinyxml2::XMLElement* collchild;
+				for (collchild = child->FirstChildElement(); collchild; collchild = collchild->NextSiblingElement())
+				{
+					text = collchild->Value();
+					if (text == "ToegelatenAfval")
+					{
+						std::string afvaltype;
+
+						if (collchild->Attribute("naam") == nullptr)
+							throw std::runtime_error("Error in function Instance::read_data(). ToegelatenAfval does not contain an attribute \"naam\"");
+						afvaltype = collchild->Attribute("naam");
+
+						_collection_points.back()._allowed_waste_types.push_back(afvaltype);
+					}
+				}
 			}
 			else if (text == "Zone")
 			{
@@ -181,7 +197,6 @@ namespace IVM
 					else if (text == "HuidigeKalender")
 					{
 						std::string afvaltype;
-						std::string dag;
 						int dagindex;
 						int week;
 
@@ -191,16 +206,16 @@ namespace IVM
 
 						if (zonechild->Attribute("dag") == nullptr)
 							throw std::runtime_error("Error in function Instance::read_data(). HuidigeKalender does not contain an attribute \"dag\"");
-						dag = zonechild->Attribute("dag");
-						dagindex = _dag_naam_index.at(dag);
+						text = zonechild->Attribute("dag");
+						dagindex = _dag_naam_index.at(text);
 
 						if (zonechild->Attribute("week") == nullptr)
 							throw std::runtime_error("Error in function Instance::read_data(). HuidigeKalender does not contain an attribute \"week\"");
 						text = zonechild->Attribute("week");
 						week = std::stoi(text) - 1; // index starts at 1 in xml, but at 0 in code
 
-						_zones.back()._current_calendar_day[afvaltype] = dagindex;
-						_zones.back()._current_calendar_week[afvaltype] = week;
+						_zones.back()._current_calendar_day.insert(std::pair<std::string, int>(afvaltype, dagindex));
+						_zones.back()._current_calendar_week.insert(std::pair<std::string, int>(afvaltype, week));
 					}
 					else if (text == "Rijtijd")
 					{
@@ -248,11 +263,25 @@ namespace IVM
 
 	bool Instance::current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const
 	{
-		if (_zones[zone]._current_calendar_day.at(waste_type) == day
-			&& _zones[zone]._current_calendar_week.at(waste_type) == week)
-			return true;
+		bool dayfound = false;
+		auto range_day = _zones[zone]._current_calendar_day.equal_range(waste_type);
+		for (auto&& it = range_day.first; it != range_day.second; ++it) {
+			if (it->second == day) {
+				dayfound = true;
+				break;
+			}
+		}
 
-		return false;
+		bool weekfound = false;
+		auto range_week = _zones[zone]._current_calendar_week.equal_range(waste_type);
+		for (auto&& it = range_week.first; it != range_week.second; ++it) {
+			if (it->second == week) {
+				weekfound = true;
+				break;
+			}
+		}
+
+		return (dayfound && weekfound);
 	}
 
 	size_t Instance::nb_pickups_current_calendar() const
@@ -278,6 +307,14 @@ namespace IVM
 		return result;
 	}
 
+	bool Instance::collection_point_waste_type_allowed(size_t index, const std::string& waste_type) const
+	{
+		auto& vec = _collection_points[index]._allowed_waste_types;
+		if (std::find(vec.begin(), vec.end(), waste_type) != vec.end())
+			return true;
+		return false;
+	}
+
 	double Instance::x_tmdw(size_t waste_type, size_t zone, size_t day, size_t week) const
 	{ 
 		assert(waste_type < _waste_types.size());
@@ -290,96 +327,4 @@ namespace IVM
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-	///////////////////////////////////////////
-	///			  Instance Generator		///
-	///////////////////////////////////////////
-
-	void Instance_Generator::generate_xml()
-	{
-		std::random_device randdev;
-		std::seed_seq seed{ randdev(),randdev(), randdev(), randdev(), randdev(), randdev(), randdev() };
-		std::mt19937_64 engine(seed);
-
-		std::uniform_int_distribution<> dist_demand_rest(5,25);
-		std::uniform_int_distribution<> dist_demand_gft(2,10);
-		std::uniform_int_distribution<> dist_drive_time(1,8); // echte waarde tussen 0.1 en 0.8 dus factor 10 kleiner
-		std::uniform_int_distribution<> dist_collection_time(17, 27);	// echte waarde tussen 1.7 en 2.7 dus factor 10 kleiner
-		std::uniform_int_distribution<> dist_costs(1, 10); // vermenigvuldig met 100 voor fixed costs en met 10 voor variable costs
-		std::uniform_int_distribution<> dist_day(0, 4); 
-
-		const std::vector<std::string> day_names{ "maandag","dinsdag","woensdag","donderdag","vrijdag" };
-		
-		const int max_visits = 1;
-		const double max_time = 7.5;
-		const double unloading_time = 0.25; // Jens
-
-		const double fixedcosts = dist_costs(engine) * 100;
-		const double operatingcosts = dist_costs(engine) * 10;
-		const double capacity_truckgft_gft = 10;
-		const double capacity_truckgft_rest = 12.5;
-		const double capacity_truckrest_gft = 0;
-		const double capacity_truckrest_rest = 25;
-		
-
-		std::ofstream file;
-		file.open("random_instance.xml");
-		if (!file.is_open())
-		{
-			std::cout << "\n\n\nError in Instance_Generator::generate_xml(). Couldn't open file";
-			return;
-		}
-
-		file << "<?xml version=\"1.0\"?>\n<Instantie naam=\"Random\" aantal_dagen=\"" << _nb_days << "\" aantal_weken=\"" << _nb_weeks << "\" max_bezoeken=\"" << max_visits << "\">"
-			<< "\n\t<Afvaltype naam=\"GFT\" lostijd=\"0.25\"/>\n\t<Afvaltype naam=\"restafval\" lostijd=\"0.25\"/>"
-			<< "\n\t<Trucktype naam=\"truck_GFT\" max_uren=\"" << max_time << "\" vaste_kosten=\"" << fixedcosts << "\" variabele_kosten=\"" << operatingcosts << "\">"
-			<< "\n\t\t<Capaciteit afvaltype=\"GFT\" cap=\"" << capacity_truckgft_gft << "\"/>"
-			<< "\n\t\t<Capaciteit afvaltype=\"restafval\" cap=\"" << capacity_truckgft_rest << "\"/>"
-			<< "\n\t</Trucktype>"
-			<< "\n\t<Trucktype naam=\"truck_restafval\" max_uren=\"" << max_time << "\" vaste_kosten=\"" << fixedcosts << "\" variabele_kosten=\"" << operatingcosts << "\">"
-			<< "\n\t\t<Capaciteit afvaltype=\"GFT\" cap=\"" << capacity_truckrest_gft << "\"/>"
-			<< "\n\t\t<Capaciteit afvaltype=\"restafval\" cap=\"" << capacity_truckrest_rest << "\"/>"
-			<< "\n\t</Trucktype>";
-
-		// Collection Points
-		for (int i = 0; i < _nb_collection_points; ++i)
-		{
-			file << "\n\t<Collectiepunt naam=\"CP" << i+1 << "\"/>";
-		}
-
-		// Customers (Zones)
-		for (int i = 0; i < _nb_zones; ++i)
-		{
-			double demand_gft = static_cast<double>(dist_demand_gft(engine)) / 10.0;
-			double demand_restafval = static_cast<double>(dist_demand_rest(engine)) / 10.0;
-			double collectiontimerest = static_cast<double>(dist_collection_time(engine)) / 10.0;
-			double collectiontimegft = static_cast<double>(dist_collection_time(engine)) / 10.0;
-			int current_day = dist_day(engine);
-
-			file << "\n\t<Zone naam=\"Z" << i + 1 << "\">"
-				<< "\n\t\t<Afval afvaltype=\"GFT\" hoeveelheid=\"" << demand_gft << "\" collectietijd=\"" << collectiontimegft << "\"/>"
-				<< "\n\t\t<Afval afvaltype=\"restafval\" hoeveelheid=\"" << demand_restafval << "\" collectietijd=\"" << collectiontimerest << "\"/>"
-				<< "\n\t\t<HuidigeKalender afvaltype=\"restafval\" dag=\"" << day_names[current_day] << "\" week=\"1\"/>"
-				<< "\n\t\t<HuidigeKalender afvaltype=\"GFT\" dag=\"" << day_names[current_day] << "\" week=\"2\"/>";
-
-			file << "\n\t\t<Rijtijd naar=\"Depot" << "\" tijd=\"" << static_cast<double>(dist_drive_time(engine)) / 10.0 << "\"/>";
-
-			for (int d = 0; d < _nb_collection_points; ++d)
-				file << "\n\t\t<Rijtijd naar=\"CP" << d + 1 << "\" tijd=\"" << static_cast<double>(dist_drive_time(engine)) / 10.0 << "\"/>";
-
-
-			file << "\n\t</Zone>";
-		}
-
-		file << "\n</Instantie>";
-	}
-
-	void Instance_Generator::change_parameters(size_t nb_zones, size_t nb_collection_points, size_t nb_days, size_t nb_weeks)
-	{
-		_nb_zones = nb_zones;
-		_nb_collection_points = nb_collection_points;
-		_nb_days = nb_days;
-		_nb_weeks = nb_weeks;
-	}
 }

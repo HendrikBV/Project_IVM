@@ -350,6 +350,7 @@ namespace IVM
 				++nb_constraints;
 
 				rhs[0] = data.max_visits();
+
 				sense[0] = 'L';
 				matbeg[0] = 0;
 
@@ -400,6 +401,7 @@ namespace IVM
 
 						const std::string& waste_type = data.waste_type(t);
 						rhs[0] = data.current_calendar(m, waste_type, d, w); // convert bool to int
+
 						sense[0] = 'L';
 						matbeg[0] = 0;
 
@@ -451,6 +453,7 @@ namespace IVM
 
 						const std::string& waste_type = data.waste_type(t);
 						rhs[0] = data.current_calendar(m, waste_type, d, w); // convert bool to int
+
 						sense[0] = 'G';
 						matbeg[0] = 0;
 
@@ -698,13 +701,13 @@ namespace IVM
 
 					nonzeroes = 0;
 
-					// y_gft,md,2
-					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+					// y_1,md,2
+					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
 					matval[nonzeroes] = 1;
 					++nonzeroes;
 
-					// y_rest,md,1
-					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+					// y_2,md,1
+					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
 					matval[nonzeroes] = -1;
 					++nonzeroes;
 
@@ -733,7 +736,7 @@ namespace IVM
 		// Enkel indien scenario van toepassing is
 		if (_scenario == FIXED_WEEK_SAME_DAY || _scenario == FIXED_WEEK_FREE_DAY)
 		{
-			// 10. y_rest,md,2
+			// 10. y_2,md,2 == 0
 			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
@@ -746,7 +749,7 @@ namespace IVM
 
 					nonzeroes = 0;
 
-					// y_rest,md,1
+					// y_rest,md,2
 					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
 					matval[nonzeroes] = 1;
 					++nonzeroes;
@@ -772,7 +775,7 @@ namespace IVM
 				}
 			}
 
-			// 11. y_gft,md,1
+			// 11. y_1,md,1 == 0
 			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
@@ -812,6 +815,56 @@ namespace IVM
 			}
 		}
 
+		// Enkel indien scenario van toepassing is
+		if (_scenario == CURRENT_CALENDAR)
+		{
+			// 12. x_tmd0 == x_tmd1
+			for (int t = 0; t < nb_types; ++t)
+			{
+				for (int m = 0; m < nb_zones; ++m)
+				{
+					for (int d = 0; d < nb_days; ++d)
+					{
+						++nb_constraints;
+
+						rhs[0] = 0;
+						sense[0] = 'E';
+						matbeg[0] = 0;
+
+						nonzeroes = 0;
+
+						// x_tmd0
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+						matval[nonzeroes] = 1;
+						++nonzeroes;
+
+						// x_tmd1
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+						matval[nonzeroes] = -1;
+						++nonzeroes;
+
+						if (nonzeroes >= maxnonzeroes)
+							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+						status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+						if (status != 0)
+						{
+							CPXgeterrorstring(env, status, error_text);
+							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						}
+
+						// change name of constraint
+						std::string conname = "c12_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+						status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+						if (status != 0)
+						{
+							CPXgeterrorstring(env, status, error_text);
+							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						}
+					}
+				}
+			}
+		}
 
 
 		// write to file
@@ -924,7 +977,20 @@ namespace IVM
 				{
 					std::ofstream solfile;
 					solfile.open("solution_IP_model_allocation.txt");
-					solfile << "\nx_tmdw  (opgehaalde hoeveelheid)";
+
+					solfile << "Instance: " << data.name_instance() << "\n";
+					if (_scenario == Scenario::FIXED_WEEK_SAME_DAY)
+						solfile << "\nScenario: fixed week & same day";
+					else if (_scenario == Scenario::FIXED_WEEK_FREE_DAY)
+						solfile << "\nScenario: fixed week & free day";
+					else if (_scenario == Scenario::FREE_WEEK_FREE_DAY)
+						solfile << "\nScenario: free week & free day";
+					solfile << "\nMax pct. changes: " << _fraction_allowed_deviations;
+					solfile << "\nMax computation time: " << _max_computation_time;
+
+					solfile << "\n\nObjective value = " << objval;
+
+					solfile << "\n\nx_tmdw  (opgehaalde hoeveelheid)";
 					for (int t = 0; t < nb_waste_types; ++t) {
 						for (int m = 0; m < nb_zones; ++m) {
 							for (int d = 0; d < nb_days; ++d) {
@@ -975,7 +1041,22 @@ namespace IVM
 						}
 					}
 
-					solfile << "\n\nObjective value = " << objval;
+					// other layout
+					for (int t = 0; t < nb_waste_types; ++t) {
+						solfile << "\n\n\n\nKalender " << data.waste_type(t) << "\nZone\tMaandag\tDinsdag\tWoensdag\tDonderdag\tVrijdag\tMaandag\tDinsdag\tWoensdag\tDonderdag\tVrijdag";
+						for (int m = 0; m < nb_zones; ++m) {
+							solfile << "\n" << data.zone_name(m);
+							for (int w = 0; w < nb_weeks; ++w) {
+								for (int d = 0; d < nb_days; ++d) {
+									solfile << "\t";
+									double val = x_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
+									if (val > 0.000001) {
+										solfile << val;
+									}
+								}
+							}
+						}
+					}
 
 					solfile.flush();
 				}

@@ -67,9 +67,25 @@ namespace IVM
 		std::vector<std::string> _waste_types;
 
 		/*!
-		 *	@brief The names of the collection points
+		 *	@brief To store information on the different collection points
 		 */
-		std::vector<std::string> _collection_points;
+		struct Collection_Point
+		{
+			/*!
+			 *	@brief Name of the collection point
+			 */
+			std::string _name;
+
+			/*!
+			 *	@brief Allowed waste types at this collection point
+			 */
+			std::vector<std::string> _allowed_waste_types;
+		};
+
+		/*!
+		 *	@brief The collection points
+		 */
+		std::vector<Collection_Point> _collection_points;
 
 		/*!
 		 *	@brief	Stores the unloading times for the various types of waste (the same at all facilities)
@@ -140,13 +156,13 @@ namespace IVM
 			 *	@brief	Current pickup day for the various types of waste
 			 *			string == waste type; double == current pickup day for that type
 			 */
-			std::unordered_map<std::string, int> _current_calendar_day; ///< Only one day possible currently!
+			std::unordered_multimap<std::string, int> _current_calendar_day; 
 
 			/*!
 			 *	@brief	Current pickup week for the various types of waste
 			 *			string == waste type; double == current pickup week for that type
 			 */
-			std::unordered_map<std::string, int> _current_calendar_week; ///< Only one week possible currently!
+			std::unordered_multimap<std::string, int> _current_calendar_week; 
 
 			/*!
 			 *	@brief	Driving time from this zone to various destinations
@@ -226,6 +242,12 @@ namespace IVM
 		size_t max_visits() const { return _max_visits; }
 
 		/*!
+		 *	@brief Get the name of the instance
+		 *  @returns	The name of the instance
+		 */
+		const std::string& name_instance() const { return _name; }
+
+		/*!
 		 *	@brief Get the name of a given day
 		 *  @param	index	The index for the day
 		 *  @returns	The name of the day
@@ -258,7 +280,15 @@ namespace IVM
 		 *  @param	index	The index for the collection point
 		 *  @returns	The name of the collection point
 		 */
-		const std::string& collection_point(size_t index) const { return _collection_points[index]; }
+		const std::string& collection_point_name(size_t index) const { return _collection_points[index]._name; }
+
+		/*!
+		 *	@brief Find out whether a certain type of waste can be dropped off at a certain collection
+		 *  @param	index	The index for the collection point
+		 *  @param	waste_type	The name of the type of waste
+		 *  @returns	True if the given type of waste can be dropped off at this collection point, false otherwise
+		 */
+		bool collection_point_waste_type_allowed(size_t index, const std::string& waste_type) const;
 
 		/*!
 		 *	@brief Get the demand for a given waste type in a given zone
@@ -359,50 +389,6 @@ namespace IVM
 		 */
 		void set_solution_x(const std::vector<double>& x) { _sol_alloc_x_tmdw = x; }
 	};
-
-	///////////////////////////////////////////////////////////////////////////
-
-	/*!
-	 *	@brief Class to generate test instances
-	 */
-	class Instance_Generator
-	{
-		/*!
-		 *	@brief The number of zones in the instance
-		 */
-		size_t _nb_zones = 41;
-
-		/*!
-		 *	@brief The number of collection points
-		 */
-		size_t _nb_collection_points = 3;
-
-		/*!
-		 *	@brief The number of days per week in the instance
-		 */
-		size_t _nb_days = 5;
-
-		/*!
-		 *	@brief The number of weeks in the instance
-		 */
-		size_t _nb_weeks = 2;
-
-	public:
-		/*!
-		 *	@brief Change the size of the instance to be generated
-		 *  @param nb_zones	The number of zones in the instance
-		 *  @param nb_collection_points	The number of collection points in the instance
-		 *  @param nb_days	The number of days in the instance
-		 *  @param nb_weeks	The number of weeks in the instance
-		 */
-		void change_parameters(size_t nb_zones, size_t nb_collection_points, size_t nb_days, size_t nb_weeks);
-
-		/*!
-		 *	@brief Generate an instance and write it to an xml-file
-		 */
-		void generate_xml();
-	};
-
 }
 
 #endif // !DATA_H

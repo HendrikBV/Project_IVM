@@ -40,18 +40,19 @@ namespace aux
 		 */
 		struct Zone
 		{
-			std::string naam;
-			double gft;
-			double restafval;
-			int gft_week1;
-			int gft_week2;
-			int rest_week1;
-			int rest_week2;
-			int verboden_dag;
-			double t_depot;
-			double t_cp1;
-			double t_cp2;
-			double t_cp3;
+			std::string naam;	///< Name of the zone
+			double gft;			///< Amount of GFT to be picked up
+			double restafval;	///< Amount of restafval to be picked up
+			int gft_week1;		///< Day in week 1 on which GFT is currently picked up
+			int gft_week2;		///< Day in week 2 on which GFT is currently picked up
+			int rest_week1;		///< Day in week 1 on which restafval is currently picked up
+			int rest_week2;		///< Day in week 2 on which restafval is currently picked up
+			int verboden_dag;	///< Day on which no pickups are allowed
+			double t_depot;		///< Driving time from this zone to the depot
+			double t_cp1;		///< Driving time from this zone collection point 1 (IVM-restafval)
+			double t_cp2;		///< Driving time from this zone collection point 2 (IVM-GFT)
+			double t_cp3;		///< Driving time from this zone collection point 3	(Renewi)
+			double t_cp4;		///< Driving time from this zone collection point 4	(Deinze)
 		};
 
 		/*!
@@ -78,6 +79,49 @@ namespace aux
 		 *  @param outputfile	Name of the outputfile (xml)
 		 */
 		void transform(const std::string& inputfile, const std::string& outputfile);
+	};
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*!
+	 *	@brief Class to generate test instances
+	 */
+	class Instance_Generator
+	{
+		/*!
+		 *	@brief The number of zones in the instance
+		 */
+		size_t _nb_zones = 41;
+
+		/*!
+		 *	@brief The number of collection points
+		 */
+		size_t _nb_collection_points = 3;
+
+		/*!
+		 *	@brief The number of days per week in the instance
+		 */
+		size_t _nb_days = 5;
+
+		/*!
+		 *	@brief The number of weeks in the instance
+		 */
+		size_t _nb_weeks = 2;
+
+	public:
+		/*!
+		 *	@brief Change the size of the instance to be generated
+		 *  @param nb_zones	The number of zones in the instance
+		 *  @param nb_collection_points	The number of collection points in the instance
+		 *  @param nb_days	The number of days in the instance
+		 *  @param nb_weeks	The number of weeks in the instance
+		 */
+		void change_parameters(size_t nb_zones, size_t nb_collection_points, size_t nb_days, size_t nb_weeks);
+
+		/*!
+		 *	@brief Generate an instance and write it to an xml-file
+		 */
+		void generate_xml();
 	};
 }
 

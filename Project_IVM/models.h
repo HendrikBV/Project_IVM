@@ -86,6 +86,11 @@ namespace IVM
 		 */
 		double _max_computation_time = 60;
 
+		/*!
+		 *	@brief The objective value of the solution
+		 */
+		double _objective_value = -1;
+
 	public:
 		/*!
 		 *	@brief Set the fraction of deviations that is allowed compared to the current calendar
@@ -98,9 +103,10 @@ namespace IVM
 		 */
 		enum Scenario
 		{
-			FIXED_WEEK_SAME_DAY,
-			FIXED_WEEK_FREE_DAY,
-			FREE_WEEK_FREE_DAY
+			FIXED_WEEK_SAME_DAY,	///< Restafval in ene week, GFT in andere week, zelfde dag
+			FIXED_WEEK_FREE_DAY,	///< Restafval in ene week, GFT in andere week, niet noodzakelijk zelfde dag
+			FREE_WEEK_FREE_DAY,		///< Vrije keuze van week of dag
+			CURRENT_CALENDAR		///< Huidige kalender (niet echt optimalisatie)
 		};
 
 		/*!
@@ -108,6 +114,18 @@ namespace IVM
 		 *  @param scenario	The scenario
 		 */
 		void set_scenario(int scenario) { _scenario = scenario; }
+
+		/*!
+		 *	@brief Set the maximum computation time
+		 *  @param max_computation_time	The maximum computation time
+		 */
+		void set_max_computation_time(double max_computation_time) { _max_computation_time = max_computation_time; }
+
+		/*!
+		 *	@brief Get the objective value of the solution
+		 *  @returns The objective value
+		 */
+		double objective_value() const { return _objective_value; }
 
 		/*!
 		 *	@brief Build and solve the MIP model
@@ -155,16 +173,6 @@ namespace IVM
 		void clear_cplex();
 
 		/*!
-		 *	@brief The available number of trucks
-		 */
-		const size_t _max_nb_trucks = 30;
-
-		/*!
-		 *	@brief The maximum number of segments in a route
-		 */
-		const size_t _max_nb_segments = 10;
-
-		/*!
 		 *	@brief Auxiliary function to give the correct index for the x variables
 		 *  @param data	The problem data
 		 *  @param q	index for the truck type
@@ -207,6 +215,18 @@ namespace IVM
 		size_t _index_beta_qv(const Instance& data, int q, int v) const;
 
 		/*!
+		 *	@brief The available number of trucks
+		 */
+		size_t _max_nb_trucks = 30;
+
+		/*!
+		 *	@brief	The maximum number of segments in a route
+		 *			Should be minimum 3
+		 *			1 zone == 3 segments, 2 zones == 5 segments, 3 zones == 7 segments and so on
+		 */
+		size_t _max_nb_segments = 9;
+
+		/*!
 		 *	@brief Indicates whether we minimize the number of trucks in the objective function or not
 		 */
 		bool _include_nb_truck_objective = true;
@@ -216,7 +236,43 @@ namespace IVM
 		 */
 		double _max_computation_time = 600;
 
+		/*!
+		 *	@brief The objective value of the optimal solution
+		 */
+		double _objective_value = -1;
+
 	public:
+
+		/*!
+		 *	@brief Set the maximum number of trucks (for each type)
+		 *  @param	max_nb_trucks	The maximum number of trucks
+		 */
+		void set_max_nb_trucks(size_t max_nb_trucks) { _max_nb_trucks = max_nb_trucks; }
+
+		/*!
+		 *	@brief Set the maximum number of segments per route
+		 *  @param	max_nb_segements	The maximum number of segments
+		 */
+		void set_max_nb_segments(size_t max_nb_segments) { _max_nb_segments = max_nb_segments; }
+
+		/*!
+		 *	@brief Set whether to include truck objective in objective function or not
+		 *  @param	include		True if truck objective should be included, false if not
+		 */
+		void include_truck_objective(bool include) { _include_nb_truck_objective = include; }
+
+		/*!
+		 *	@brief Set the maximum computation time
+		 *  @param	max_computation_time	The maximum computation time
+		 */
+		void set_max_computation_time(double max_computation_time) { _max_computation_time = max_computation_time; }
+
+		/*!
+		 *	@brief Get the objective value of the solution
+		 *  @returns The objective value
+		 */
+		double objective_value() const { return _objective_value; }
+
 		/*!
 		 *	@brief Build and solve the CPLEX model
 		 *  @param	data	The problem data
