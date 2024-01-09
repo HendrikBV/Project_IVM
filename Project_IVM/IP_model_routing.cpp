@@ -331,39 +331,42 @@ namespace IVM
 					++nonzeroes;
 				}
 
-				// -sum(i,j,k) tau_D_ij* x_qvijk
+				// -sum(i,j,k) (tau_D_ij + tau_U) * x_qvijk
 				for (int i = 0; i < nb_locations; ++i)
 				{
 					for (int j = 0; j < nb_locations; ++j)
 					{
 						for (int k = 0; k < _max_nb_segments; ++k)
 						{
+							double coeff = 0;
+							if (i < nb_zones && j == nb_zones) { // i == zone, j == depot
+								coeff = -data.time_driving_zone_depot(i);
+							}
+							else if (i < nb_zones && j > nb_zones) { // i == zone, j == collection point
+								const std::string& cp = data.collection_point_name(j - nb_zones - 1);
+								coeff += -data.time_driving_zone_collectionpoint(i, cp);
+
+								const std::string& waste_type = data.waste_type(0); // MOMENTEEL ZELFDE VERONDERSTELD
+								coeff += -data.time_unloading(waste_type);
+							}
+							else if (i == nb_zones && j < nb_zones) { // i == depot, j == zone
+								coeff += -data.time_driving_zone_depot(j);
+							}
+							else if (i > nb_zones && j < nb_zones) { // i == collection point, j == zone
+								const std::string& cp = data.collection_point_name(i - nb_zones - 1);
+								coeff += -data.time_driving_zone_collectionpoint(j, cp);
+							}
+							else if (i > nb_zones && j == nb_zones) { // i == collection point, j == depot
+								coeff += -data.time_driving_collectionpoint_depot(i - nb_zones - 1);
+							}
+
 							const size_t index = _index_x_qvijk(data, q, v, i, j, k);
 							if (index >= nb_variables)
 								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
-							if (i < nb_zones && j == nb_zones) { // i == zone, j == depot
-								matind[nonzeroes] = index;
-								matval[nonzeroes] = -data.time_driving_zone_depot(i);
-								++nonzeroes;
-							}
-							else if (i < nb_zones && j > nb_zones) { // i == zone, j == collection point
-								matind[nonzeroes] = index;
-								const std::string& cp = data.collection_point_name(j - nb_zones - 1);
-								matval[nonzeroes] = -data.time_driving_zone_collectionpoint(i, cp);
-								++nonzeroes;
-							}
-							else if (i == nb_zones && j < nb_zones) { // i == depot, j == zone
-								matind[nonzeroes] = index;
-								matval[nonzeroes] = -data.time_driving_zone_depot(j);
-								++nonzeroes;
-							}
-							else if (i > nb_zones && j < nb_zones) { // i == collection point, j == zone
-								matind[nonzeroes] = index;
-								const std::string& cp = data.collection_point_name(i - nb_zones - 1);
-								matval[nonzeroes] = -data.time_driving_zone_collectionpoint(j, cp);
-								++nonzeroes;
-							}
+							matind[nonzeroes] = index;
+							matval[nonzeroes] = coeff;
+							++nonzeroes;
 						}
 					}
 				}
@@ -386,27 +389,6 @@ namespace IVM
 						}
 					}
 				}
-
-				// sum(i,j,k) -tau_U * x_qvijk
-				for (int i = 0; i < nb_locations; ++i)
-				{
-					for (int j = 0; j < nb_locations; ++j)
-					{
-						for (int k = 0; k < _max_nb_segments; ++k)
-						{
-							const size_t index = _index_x_qvijk(data, q, v, i, j, k);
-							if (index >= nb_variables)
-								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
-
-
-							matind[nonzeroes] = index;
-							const std::string& waste_type = data.waste_type(0); // MOMENTEEL ZELFDE VERONDERSTELD
-							matval[nonzeroes] = -data.time_unloading(waste_type);
-							++nonzeroes;
-						}
-					}
-				}
-
 
 				if (nonzeroes >= maxnonzeroes)
 					throw std::runtime_error("Error in function IP_model_routing::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
@@ -1016,6 +998,14 @@ namespace IVM
 			throw std::runtime_error("Error in function IP_model_allocation::solve_problem(). \nCouldn't set time limit. \nReason: " + std::string(error_text));
 		}
 
+		// Set tolerance gap
+		status = CPXsetdblparam(env, CPXPARAM_MIP_Tolerances_MIPGap, _optimality_tolerance);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_model_allocation::solve_problem(). \nCouldn't set optimality tolerance. \nReason: " + std::string(error_text));
+		}
+
 		// Set presolve off
 		/*status = CPXsetintparam(env, CPXPARAM_Preprocessing_Presolve, CPX_OFF);
 		if (status != 0)
@@ -1160,6 +1150,20 @@ namespace IVM
 					}
 				}
 
+				// fixed and variable costs trucks
+				double fixed_costs = 0, variable_costs = 0;
+				for (int q = 0; q < nb_truck_types; ++q)
+				{
+					for (int v = 0; v < _max_nb_trucks; ++v)
+					{
+						variable_costs += data.operating_costs(q) * beta_qv[q * _max_nb_trucks + v];
+						fixed_costs += data.fixed_costs(q) * y_qv[q * _max_nb_trucks + v];
+					}
+				}
+				if (std::abs(fixed_costs + variable_costs - objval) > 0.001)
+					std::cout << "\nSum of costs not equal to objective value";
+				
+
 
 
 				// Write solution to file 
@@ -1167,20 +1171,25 @@ namespace IVM
 					try
 					{
 						std::ofstream solfile;
-						std::string filename = "solution_IP_model_routing.txt";
+						std::string filename = data.name_instance() + "_routing.txt";
 						if (day == 0)
 							solfile.open(filename);
 						else
 							solfile.open(filename, std::ios_base::app); // append
 
-						solfile << "Instance: " << data.name_instance();
-						solfile << "\n\nMax computation time per subproblem (s): " << _max_computation_time;
-						solfile << "\nMax nb trucks (per type): " << _max_nb_trucks;
-						solfile << "\nMax nb segments per route: " << _max_nb_segments;
-						solfile << "\nInclude truck objective: "; if (_include_nb_truck_objective) solfile << "yes"; else solfile << "no";
+						if (day == 0)
+						{
+							solfile << "Instance: " << data.name_instance();
+							solfile << "\n\nMax computation time per subproblem (s): " << _max_computation_time;
+							solfile << "\nMax nb trucks (per type): " << _max_nb_trucks;
+							solfile << "\nMax nb segments per route: " << _max_nb_segments;
+							solfile << "\nInclude truck objective: "; if (_include_nb_truck_objective) solfile << "yes"; else solfile << "no";
+						}
 
 						solfile << "\n\n\n\nDay " << day + 1;
-						solfile << "\n\nObjective value = " << objval << "\n\n";
+						solfile << "\n\nObjective value = " << objval;
+						solfile << "\nFixed costs = " << fixed_costs;
+						solfile << "\nVariable costs = " << variable_costs << "\n\n";
 
 						for (int q = 0; q < nb_truck_types; ++q) {
 							for (int v = 0; v < _max_nb_trucks; ++v) {
@@ -1228,7 +1237,7 @@ namespace IVM
 							}
 						}
 
-						solfile << "====================================================================================================\n\n\n\n\n\n\n\n\n\n\n";
+						solfile << "\n\n====================================================================================================\n\n\n\n\n\n\n\n\n\n\n";
 						solfile.flush();
 					}
 					catch (const std::exception& e)
@@ -1240,12 +1249,233 @@ namespace IVM
 					}
 				}
 
-				// Alternative representation solution to file
+				// Routes to table
 				{
 					try
 					{
 						std::ofstream solfile;
-						std::string filename = "solution_IP_model_routing_altreprestation.txt";
+						std::string filename = data.name_instance() + "_routing_alt.txt";
+						if (day == 0)
+							solfile.open(filename);
+						else
+							solfile.open(filename, std::ios_base::app); // append
+
+						if (day == 0)
+						{
+							solfile << "Instance: " << data.name_instance();
+							solfile << "\n\nMax computation time per subproblem (s): " << _max_computation_time;
+							solfile << "\nMax nb trucks (per type): " << _max_nb_trucks;
+							solfile << "\nMax nb segments per route: " << _max_nb_segments;
+							solfile << "\nInclude truck objective: "; if (_include_nb_truck_objective) solfile << "yes"; else solfile << "no";
+						}
+
+						/*solfile << "\n\n\n\nDay " << day + 1;
+						solfile << "\n\nObjective value = " << objval;
+						solfile << "\nFixed costs = " << fixed_costs;
+						solfile << "\nVariable costs = " << variable_costs << "\n\n";*/
+
+						struct Route
+						{
+							std::string trucktype;
+							double hours;
+							std::vector<std::string> destinations; // e.g. depot, zoneA, CP1, zoneB, CP1, depot
+							std::vector<int> amounts;	// amounts picked up at respective zones
+							int nb_times_used = 1;
+						};
+						std::vector<Route> routes;
+
+						// calculate routes
+						for (int q = 0; q < nb_truck_types; ++q) {
+							for (int v = 0; v < _max_nb_trucks; ++v) {
+								if (y_qv.at(q * _max_nb_trucks + v) > 0) {
+									// route
+									Route newroute;
+									newroute.destinations.push_back("depot");
+									newroute.trucktype = data.truck_type(q);
+									newroute.hours = beta_qv.at(q * _max_nb_trucks + v);
+
+									for (int t = 0; t < nb_waste_types; ++t) {
+										for (int m = 0; m < nb_zones; ++m) {
+											for (int k = 0; k < _max_nb_segments; ++k) {
+												double wval = w_tqvik.at(t * nb_truck_types * _max_nb_trucks * nb_zones * _max_nb_segments + q * _max_nb_trucks * nb_zones * _max_nb_segments + v * nb_zones * _max_nb_segments + m * _max_nb_segments + k);
+												if (wval > 0.001) {
+													int wvalkg = static_cast<int>(wval * 1000 + 0.001);
+													newroute.amounts.push_back(wvalkg);
+												}
+											}
+										}
+									}
+
+									for (int k = 0; k < _max_nb_segments; ++k) {
+										for (int i = 0; i < nb_locations; ++i) {
+											for (int j = 0; j < nb_locations; ++j) {
+												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k) + 0.000001;
+												if (xval > 0) {
+													std::string destination;
+													if (j < nb_zones)
+														destination = data.zone_name(j);
+													else if (j == nb_zones)
+														destination = "depot";
+													else
+														destination = data.collection_point_name(j - nb_zones - 1);
+
+													newroute.destinations.push_back(destination);
+												}
+											}
+										}
+									}
+
+									// check if route already exists
+									bool already_exists = false;
+									for (auto&& er : routes) {
+										if (er.trucktype == newroute.trucktype && er.destinations == newroute.destinations && er.amounts == newroute.amounts) {
+											already_exists = true;
+											++er.nb_times_used;
+											break;
+										}
+									}
+									if (!already_exists) {
+										routes.push_back(newroute);
+									}
+								}
+							}
+						}
+
+						// write routes to file
+						if(day == 0)
+							solfile << "\n\n\nDag\tVrachtwagen\tTijd\tRoute\tHoeveelheden\tAantal_keer_gebruikt";
+						for (auto&& r : routes) {
+							solfile << "\n" << day + 1 << "\t" << r.trucktype << "\t";// << r.hours << "\t";
+							for (size_t ii = 0; ii < r.destinations.size(); ++ii) {
+								solfile << r.destinations[ii];
+								if (ii < r.destinations.size() - 1)
+									solfile << ";";
+							}
+							solfile << "\t";
+							for (size_t ii = 0; ii < r.amounts.size(); ++ii) {
+								solfile << r.amounts[ii];
+								if (ii < r.amounts.size() - 1)
+									solfile << ";";
+							}
+							solfile << "\t" << r.nb_times_used;
+						}
+						solfile.flush();
+					}
+					catch (const std::exception& e)
+					{
+						std::cout << "\n\n\nError in function IP_model_routing::solve_problem()."
+							<< "\nProblem with writing solution representation to file.\n"
+							<< e.what()
+							<< "\n\n\n";
+					}
+				}
+
+				// Routes to table (bis)
+				{
+					try
+					{
+						std::ofstream solfile;
+						std::string filename = data.name_instance() + "_routing_altshort.txt";
+						if (day == 0)
+							solfile.open(filename);
+						else
+							solfile.open(filename, std::ios_base::app); // append
+
+						if (day == 0)
+						{
+							solfile << "Instance: " << data.name_instance();
+							solfile << "\n\nMax computation time per subproblem (s): " << _max_computation_time;
+							solfile << "\nMax nb trucks (per type): " << _max_nb_trucks;
+							solfile << "\nMax nb segments per route: " << _max_nb_segments;
+							solfile << "\nInclude truck objective: "; if (_include_nb_truck_objective) solfile << "yes"; else solfile << "no";
+						}
+
+						/*solfile << "\n\n\n\nDay " << day + 1;
+						solfile << "\n\nObjective value = " << objval;
+						solfile << "\nFixed costs = " << fixed_costs;
+						solfile << "\nVariable costs = " << variable_costs << "\n\n";*/
+
+						struct Route
+						{
+							std::string trucktype;
+							std::vector<std::string> destinations; // e.g. depot, zoneA, CP1, zoneB, CP1, depot
+							int nb_times_used = 1;
+						};
+						std::vector<Route> routes;
+
+						// calculate routes
+						for (int q = 0; q < nb_truck_types; ++q) {
+							for (int v = 0; v < _max_nb_trucks; ++v) {
+								if (y_qv.at(q * _max_nb_trucks + v) > 0) {
+									// route
+									Route newroute;
+									newroute.destinations.push_back("depot");
+									newroute.trucktype = data.truck_type(q);
+
+									for (int k = 0; k < _max_nb_segments; ++k) {
+										for (int i = 0; i < nb_locations; ++i) {
+											for (int j = 0; j < nb_locations; ++j) {
+												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k) + 0.000001;
+												if (xval > 0) {
+													std::string destination;
+													if (j < nb_zones)
+														destination = data.zone_name(j);
+													else if (j == nb_zones)
+														destination = "depot";
+													else
+														destination = data.collection_point_name(j - nb_zones - 1);
+
+													newroute.destinations.push_back(destination);
+												}
+											}
+										}
+									}
+
+									// check if route already exists
+									bool already_exists = false;
+									for (auto&& er : routes) {
+										if (er.trucktype == newroute.trucktype && er.destinations == newroute.destinations) {
+											already_exists = true;
+											++er.nb_times_used;
+											break;
+										}
+									}
+									if (!already_exists) {
+										routes.push_back(newroute);
+									}
+								}
+							}
+						}
+
+						// write routes to file
+						if (day == 0)
+							solfile << "\n\n\nDag\tVrachtwagen\tRoute\tAantal_keer_gebruikt";
+						for (auto&& r : routes) {
+							solfile << "\n" << day + 1 << "\t" << r.trucktype << "\t";// << r.hours << "\t";
+							for (size_t ii = 0; ii < r.destinations.size(); ++ii) {
+								solfile << r.destinations[ii];
+								if (ii < r.destinations.size() - 1)
+									solfile << ";";
+							}
+							solfile << "\t" << r.nb_times_used;
+						}
+						solfile.flush();
+					}
+					catch (const std::exception& e)
+					{
+						std::cout << "\n\n\nError in function IP_model_routing::solve_problem()."
+							<< "\nProblem with writing solution representation to file.\n"
+							<< e.what()
+							<< "\n\n\n";
+					}
+				}
+
+				// Alternative representation solution to file
+				/*{
+					try
+					{
+						std::ofstream solfile;
+						std::string filename = data.name_instance() + "_routing_alt.txt";
 						if (day == 0)
 							solfile.open(filename);
 						else
@@ -1298,7 +1528,7 @@ namespace IVM
 							}
 						}
 
-						solfile << "====================================================================================================\n\n\n\n\n\n\n\n\n\n\n";
+						solfile << "\n\n====================================================================================================\n\n\n\n\n\n\n\n\n\n\n";
 						solfile.flush();
 					}
 					catch (const std::exception& e)
@@ -1308,7 +1538,7 @@ namespace IVM
 							<< e.what()
 							<< "\n\n\n";
 					}
-				}
+				}*/
 			}
 		}
 

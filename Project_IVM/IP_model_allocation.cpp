@@ -493,6 +493,7 @@ namespace IVM
 		}
 
 		// 6: sum(t,m,d,w) z_tmdw <= pi*theta
+		if(_fraction_allowed_deviations < 0.99)
 		{
 			++nb_constraints;
 
@@ -552,7 +553,7 @@ namespace IVM
 
 					// scenario
 					double Atw = 0;
-					if (_scenario == FREE_WEEK_FREE_DAY)
+					//if (_scenario == FREE_WEEK_FREE_DAY)
 					{
 						for (int m = 0; m < nb_zones; ++m) {
 							const std::string& waste_type = data.waste_type(t);
@@ -560,7 +561,7 @@ namespace IVM
 						}
 						Atw /= (nb_days * nb_weeks);
 					}
-					else if (std::abs(t - w) == 1)
+					/*else if (std::abs(t - w) == 1)
 					{
 						for (int m = 0; m < nb_zones; ++m) {
 							const std::string& waste_type = data.waste_type(t);
@@ -569,7 +570,7 @@ namespace IVM
 						Atw /= nb_days;
 					}
 					else
-						Atw = 0;
+						Atw = 0;*/
 
 
 					rhs[0] = Atw;
@@ -624,7 +625,7 @@ namespace IVM
 
 					// scenario
 					double Atw = 0;
-					if (_scenario == FREE_WEEK_FREE_DAY)
+					//if (_scenario == FREE_WEEK_FREE_DAY) // altijd want vrije keuze
 					{
 						for (int m = 0; m < nb_zones; ++m) {
 							const std::string& waste_type = data.waste_type(t);
@@ -632,7 +633,7 @@ namespace IVM
 						}
 						Atw /= (nb_days * nb_weeks);
 					}
-					else if (std::abs(t - w) == 1)
+					/*else if (std::abs(t - w) == 1)
 					{
 						for (int m = 0; m < nb_zones; ++m) {
 							const std::string& waste_type = data.waste_type(t);
@@ -641,7 +642,7 @@ namespace IVM
 						Atw /= nb_days;
 					}
 					else
-						Atw = 0;
+						Atw = 0;*/
 
 
 					rhs[0] = Atw;
@@ -687,6 +688,199 @@ namespace IVM
 
 		// Enkel indien scenario van toepassing is
 		if (_scenario == FIXED_WEEK_SAME_DAY)
+		{
+			// 9. y_1,md,1 == y_2,md,2   forall m,d
+			for (int m = 0; m < nb_zones; ++m)
+			{
+				for (int d = 0; d < nb_days; ++d)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'E';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// y_1,md,1
+					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+					matval[nonzeroes] = 1;
+					++nonzeroes;
+
+					// y_2,md,2
+					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+					matval[nonzeroes] = -1;
+					++nonzeroes;
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c9_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+
+			// 9bis. y_1,md,2 == y_2,md,1   forall m,d
+			for (int m = 0; m < nb_zones; ++m)
+			{
+				for (int d = 0; d < nb_days; ++d)
+				{
+					++nb_constraints;
+
+					rhs[0] = 0;
+					sense[0] = 'E';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// y_1,md,1
+					matind[nonzeroes] = startindex_y_tmdw + 0 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+					matval[nonzeroes] = 1;
+					++nonzeroes;
+
+					// y_2,md,2
+					matind[nonzeroes] = startindex_y_tmdw + 1 * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+					matval[nonzeroes] = -1;
+					++nonzeroes;
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c9bis_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// Enkel indien scenario van toepassing is
+		if (_scenario == FIXED_WEEK_FREE_DAY)
+		{
+			// Dit veronderstelt dat max 1 bezoek per week, anders extra variabele nodig
+			// 10. sum(t,d) y_tmdw <= 1   forall(w,m)
+			for (int m = 0; m < nb_zones; ++m)
+			{
+				for (int w = 0; w < nb_weeks; ++w)
+				{
+					++nb_constraints;
+
+					rhs[0] = 1;
+					sense[0] = 'L';
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// sum(t,d) y_tmdw
+					for (int t = 0; t < nb_types; ++t)
+					{
+						for (int d = 0; d < nb_days; ++d)
+						{
+							matind[nonzeroes] = startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+							matval[nonzeroes] = 1;
+							++nonzeroes;
+						}
+					}
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c10_" + std::to_string(m + 1) + "_" + std::to_string(w + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// Enkel indien scenario van toepassing is
+		if (_scenario == CURRENT_CALENDAR) // elke week restafval
+		{
+			// 12. x_tmd0 == x_tmd1
+			for (int t = 0; t < nb_types; ++t)
+			{
+				for (int m = 0; m < nb_zones; ++m)
+				{
+					for (int d = 0; d < nb_days; ++d)
+					{
+						++nb_constraints;
+
+						rhs[0] = 0;
+						sense[0] = 'E';
+						matbeg[0] = 0;
+
+						nonzeroes = 0;
+
+						// x_tmd0
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
+						matval[nonzeroes] = 1;
+						++nonzeroes;
+
+						// x_tmd1
+						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
+						matval[nonzeroes] = -1;
+						++nonzeroes;
+
+						if (nonzeroes >= maxnonzeroes)
+							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+						status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+						if (status != 0)
+						{
+							CPXgeterrorstring(env, status, error_text);
+							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						}
+
+						// change name of constraint
+						std::string conname = "c12_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+						status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+						if (status != 0)
+						{
+							CPXgeterrorstring(env, status, error_text);
+							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						}
+					}
+				}
+			}
+		}
+
+		// Enkel indien scenario van toepassing is
+		/*if (_scenario == FIXED_WEEK_SAME_DAY)
 		{
 			// 9. y_rest,md,1 == y_gft,md,2   forall m,d
 			for (int m = 0; m < nb_zones; ++m)
@@ -814,57 +1008,8 @@ namespace IVM
 				}
 			}
 		}
+		*/
 
-		// Enkel indien scenario van toepassing is
-		if (_scenario == CURRENT_CALENDAR)
-		{
-			// 12. x_tmd0 == x_tmd1
-			for (int t = 0; t < nb_types; ++t)
-			{
-				for (int m = 0; m < nb_zones; ++m)
-				{
-					for (int d = 0; d < nb_days; ++d)
-					{
-						++nb_constraints;
-
-						rhs[0] = 0;
-						sense[0] = 'E';
-						matbeg[0] = 0;
-
-						nonzeroes = 0;
-
-						// x_tmd0
-						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 0;
-						matval[nonzeroes] = 1;
-						++nonzeroes;
-
-						// x_tmd1
-						matind[nonzeroes] = startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + 1;
-						matval[nonzeroes] = -1;
-						++nonzeroes;
-
-						if (nonzeroes >= maxnonzeroes)
-							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
-
-						status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
-						if (status != 0)
-						{
-							CPXgeterrorstring(env, status, error_text);
-							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
-						}
-
-						// change name of constraint
-						std::string conname = "c12_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
-						status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
-						if (status != 0)
-						{
-							CPXgeterrorstring(env, status, error_text);
-							throw std::runtime_error("Error in function IP_model_allocation::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
-						}
-					}
-				}
-			}
-		}
 
 
 		// write to file
@@ -977,7 +1122,8 @@ namespace IVM
 				// Write solution to file
 				{
 					std::ofstream solfile;
-					solfile.open("solution_IP_model_allocation.txt");
+					std::string filename = data.name_instance() + "_allocation.txt";
+					solfile.open(filename);
 
 					solfile << "Instance: " << data.name_instance() << "\n";
 					if (_scenario == Scenario::FIXED_WEEK_SAME_DAY)

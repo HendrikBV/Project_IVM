@@ -80,6 +80,11 @@ namespace IVM
 			 *	@brief Allowed waste types at this collection point
 			 */
 			std::vector<std::string> _allowed_waste_types;
+
+			/*!
+			 *	@brief Driving time from this collection point to the depot
+			 */
+			double _driving_time_depot;
 		};
 
 		/*!
@@ -342,6 +347,13 @@ namespace IVM
 		 *  @returns	The driving time
 		 */
 		double time_driving_zone_depot(size_t zone) const { return _zones[zone]._driving_time.at("Depot"); }
+
+		/*!
+		 *	@brief Get the driving time from a given collection point to the depot
+		 *  @param	index	The index for the collection point
+		 *  @returns	The driving time
+		 */
+		double time_driving_collectionpoint_depot(size_t index) const { return _collection_points[index]._driving_time_depot; }
 
 		/*!
 		 *	@brief Get the pickup time per unit of waste for a given type of waste at a given zone

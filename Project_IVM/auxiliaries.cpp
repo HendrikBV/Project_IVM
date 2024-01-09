@@ -116,8 +116,8 @@ namespace aux
 		for (auto&& zone : _zones)
 		{
 			file << "\n\t<Zone naam=\"" << zone.naam << "\">"
-				<< "\n\t\t<Afval afvaltype=\"GFT\" hoeveelheid=\"" << zone.gft << "\" collectietijd=\"2.2\"/>"
-				 << "\n\t\t<Afval afvaltype=\"restafval\" hoeveelheid=\"" << zone.restafval << "\" collectietijd=\"2.2\"/>";
+				<< "\n\t\t<Afval afvaltype=\"GFT\" hoeveelheid=\"" << zone.gft << "\" collectietijd=\"0.9\"/>"
+				 << "\n\t\t<Afval afvaltype=\"restafval\" hoeveelheid=\"" << zone.restafval << "\" collectietijd=\"0.45\"/>";
 
 			if (zone.gft_week1 > 0)
 				file << "\n\t\t<HuidigeKalender afvaltype=\"GFT\" dag=\"" << dag_naam.at(zone.gft_week1) << "\" week=\"1\"/>";

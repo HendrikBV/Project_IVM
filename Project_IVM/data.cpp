@@ -157,6 +157,22 @@ namespace IVM
 
 						_collection_points.back()._allowed_waste_types.push_back(afvaltype);
 					}
+					else if (text == "Rijtijd")
+					{
+						std::string bestemming;
+						if(collchild->Attribute("naar") == nullptr)
+							throw std::runtime_error("Error in function Instance::read_data(). Rijtijd does not contain an attribute \"naar\"");
+						bestemming = collchild->Attribute("naar");
+						if(bestemming != "Depot")
+							throw std::runtime_error("Error in function Instance::read_data(). Attribute \"naar\" should have value \"Depot\"");
+						
+						if (collchild->Attribute("tijd") == nullptr)
+							throw std::runtime_error("Error in function Instance::read_data(). Rijtijd does not contain an attribute \"tijd\"");
+						text = collchild->Attribute("tijd");
+						double time = std::stod(text);
+
+						_collection_points.back()._driving_time_depot = time;
+					}
 				}
 			}
 			else if (text == "Zone")
@@ -223,11 +239,11 @@ namespace IVM
 						double time;
 
 						if (zonechild->Attribute("naar") == nullptr)
-							throw std::runtime_error("Error in function Instance::read_data(). HuidigeKalender does not contain an attribute \"naar\"");
+							throw std::runtime_error("Error in function Instance::read_data(). Rijtijd does not contain an attribute \"naar\"");
 						destination = zonechild->Attribute("naar");
 
 						if (zonechild->Attribute("tijd") == nullptr)
-							throw std::runtime_error("Error in function Instance::read_data(). HuidigeKalender does not contain an attribute \"tijd\"");
+							throw std::runtime_error("Error in function Instance::read_data(). Rijtijd does not contain an attribute \"tijd\"");
 						text = zonechild->Attribute("tijd");
 						time = std::stod(text);
 

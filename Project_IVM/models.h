@@ -237,6 +237,13 @@ namespace IVM
 		double _max_computation_time = 600;
 
 		/*!
+		 *	@brief	When the value |bestbound-bestinteger|/(1e-10+|bestinteger|) falls below the value of this parameter, the mixed integer optimization is stopped.
+		 *			Between 0.0 and 1.0
+		 *			Standard CPLEX value = 0.0001
+		 */
+		double _optimality_tolerance = 0.0001;
+
+		/*!
 		 *	@brief The objective value of the optimal solution
 		 */
 		double _objective_value = -1;
@@ -266,6 +273,12 @@ namespace IVM
 		 *  @param	max_computation_time	The maximum computation time
 		 */
 		void set_max_computation_time(double max_computation_time) { _max_computation_time = max_computation_time; }
+
+		/*!
+		 *	@brief Set the optimality tolerance
+		 *  @param	optimality_tolerance	The optimality tolerance (should be between 0.0 and 1.0)
+		 */
+		void set_optimality_tolerance(double optimality_tolerance) { _optimality_tolerance = optimality_tolerance; }
 
 		/*!
 		 *	@brief Get the objective value of the solution
