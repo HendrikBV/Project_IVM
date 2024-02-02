@@ -1304,6 +1304,20 @@ namespace IVM
 					}
 				}
 
+
+
+
+				struct Route
+				{
+					std::string trucktype;
+					std::string wastetype;
+					double hours = 0;
+					std::vector<std::string> destinations; // e.g. depot, zoneA, CP1, zoneB, CP1, depot
+					std::vector<int> amounts;	// amounts picked up at respective zones
+					int nb_times_used = 1;
+				};
+				std::vector<Route> routes;
+
 				// Routes to table
 				{
 					try
@@ -1329,15 +1343,6 @@ namespace IVM
 						solfile << "\nFixed costs = " << fixed_costs;
 						solfile << "\nVariable costs = " << variable_costs << "\n\n";*/
 
-						struct Route
-						{
-							std::string trucktype;
-							double hours = 0;
-							std::vector<std::string> destinations; // e.g. depot, zoneA, CP1, zoneB, CP1, depot
-							std::vector<int> amounts;	// amounts picked up at respective zones
-							int nb_times_used = 1;
-						};
-						std::vector<Route> routes;
 
 						// calculate routes
 						for (int q = 0; q < nb_truck_types; ++q) {
@@ -1354,6 +1359,7 @@ namespace IVM
 											for (int k = 0; k < _max_nb_segments; ++k) {
 												double wval = w_tqvik.at(t * nb_truck_types * _max_nb_trucks * nb_zones * _max_nb_segments + q * _max_nb_trucks * nb_zones * _max_nb_segments + v * nb_zones * _max_nb_segments + m * _max_nb_segments + k);
 												if (wval > 0.001) {
+													newroute.wastetype = data.waste_type(t);
 													int wvalkg = static_cast<int>(wval * 1000 + 0.001);
 													newroute.amounts.push_back(wvalkg);
 												}
@@ -1525,75 +1531,63 @@ namespace IVM
 					}
 				}
 
-				// Alternative representation solution to file
-				/*{
+				// Write routes to xml file
+				{
 					try
 					{
 						std::ofstream solfile;
-						std::string filename = data.name_instance() + "_routing_alt.txt";
+						std::string filename = data.name_instance() + "_routes.xml";
 						if (day == 0)
 							solfile.open(filename);
 						else
 							solfile.open(filename, std::ios_base::app); // append
 
-						for (int q = 0; q < nb_truck_types; ++q) {
-							solfile << "\n\n\nTrucks type " << data.truck_type(q) << "\n";
-							for (int v = 0; v < _max_nb_trucks; ++v) {
-								if (y_qv.at(q * _max_nb_trucks + v) > 0) {
-									for (int k = 0; k < _max_nb_segments; ++k) {
-										for (int i = 0; i < nb_locations; ++i) {
-											for (int j = 0; j < nb_locations; ++j) {
-												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k) + 0.0000001;
-												if (xval > 0) {
-													std::string origin, destination;
-													if (i < nb_zones)
-														origin = data.zone_name(i);
-													else if (i == nb_zones)
-														origin = "depot";
-													else
-														origin = data.collection_point_name(i - nb_zones - 1);
-													if (j < nb_zones)
-														destination = data.zone_name(j);
-													else if (j == nb_zones)
-														destination = "depot";
-													else
-														destination = data.collection_point_name(j - nb_zones - 1);
-
-													std::string wastetype;
-													double wval = 0;
-													for (int t = 0; t < nb_waste_types; ++t) {
-														if (j < nb_zones) { // w_tqvik only exists for zones, not depot or collection points (j -> nb_locations)
-															wval = w_tqvik.at(t * nb_truck_types * _max_nb_trucks * nb_zones * _max_nb_segments + q * _max_nb_trucks * nb_zones * _max_nb_segments + v * nb_zones * _max_nb_segments + j * _max_nb_segments + k);
-
-															if (wval > 0.000001) {
-																wastetype = data.waste_type(t);
-																break; // keep value of wval
-																// more than one type of waste possible at same pickup???
-															}
-														}
-													}
-
-													solfile << "\n\t" << origin << "\t" << destination << "\t" << wastetype << "\t" << wval;
-												}
-											}
-										}
-									}
-									solfile << "\n\tNaN\tNaN\t\t";
-								}
-							}
+						if (day == 0)
+						{
+							solfile << "<?xml version=\"1.0\"?>"
+								<< "\n<Routes instantie=\"" << data.name_instance() << "\""
+								<< " vaste_kosten=\"" << fixed_costs << "\""
+								<< " variabele_kosten=\"" << variable_costs << "\""
+								<< " max_rekentijd=\"" << _max_computation_time << "\""
+								<< " max_trucks_per_type=\"" << _max_nb_trucks << "\""
+								<< " max_nb_segmenten=\"" << _max_nb_segments << "\">";
 						}
 
-						solfile << "\n\n====================================================================================================\n\n\n\n\n\n\n\n\n\n\n";
+						int dagweek = day % nb_days;
+						std::string dagstr = data.day_name(dagweek);
+						int week = day / nb_days;
+
+						for (auto&& rr : routes)
+						{
+							solfile << "\n\t<Route truck_type=\"" << rr.trucktype << "\""
+								<< " afval_type=\"" << rr.wastetype << "\""
+								<< " dag=\"" << dagstr << "\""
+								<< " week=\"" << week + 1 << "\""
+								<< " rijtijd=\"" << rr.hours << "\""
+								<< " aantal_keer_gebruikt=\"" << rr.nb_times_used << "\">";
+							for (int ii = 0; ii < rr.amounts.size(); ++ii)
+							{
+								int index_dest = ii + 1;
+								solfile << "\n\t\t<Ophaling zone=\"" << rr.destinations[index_dest] << "\""
+									<< " hoeveelheid=\"" << rr.amounts[ii] << "\"/>";
+							}
+							solfile << "\n\t</Route>";
+						}
+
+						if (day == data.nb_days() - 1)
+							solfile << "\n</Routes>";
+
+
 						solfile.flush();
 					}
 					catch (const std::exception& e)
 					{
 						std::cout << "\n\n\nError in function IP_model_routing::solve_problem()."
-							<< "\nProblem with writing alternative solution representation to file.\n"
+							<< "\nProblem with writing solution representation to xml file.\n"
 							<< e.what()
 							<< "\n\n\n";
 					}
-				}*/
+				}
 			}
 		}
 
