@@ -1,11 +1,6 @@
 /*
-	Copyright (c) 2023 Hendrik Vermuyten
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
+	Copyright (c) 2024 KU Leuven
+	Code author: Hendrik Vermuyten
 */
 
 
@@ -136,7 +131,6 @@ namespace IVM
 				_collection_points.push_back(Collection_Point());
 
 				std::string naamc;
-				double lostijd;
 
 				if (child->Attribute("naam") == nullptr)
 					throw std::runtime_error("Error in function Instance::read_data(). Collectiepunt does not contain an attribute \"naam\"");
@@ -266,6 +260,179 @@ namespace IVM
 		}
 	}
 
+	void Instance::read_allocation_xml(const std::string& filename)
+	{
+		// Initialize vector with 0's 
+		_sol_alloc_x_tmdw.clear();
+		_sol_alloc_x_tmdw.reserve(nb_waste_types() * nb_zones() * nb_days() * nb_weeks());
+		for (int t = 0; t < nb_waste_types(); ++t) {
+			for (int m = 0; m < nb_zones(); ++m) {
+				for (int d = 0; d < nb_days(); ++d) {
+					for (int w = 0; w < nb_weeks(); ++w) {
+						_sol_alloc_x_tmdw.push_back(0.0);
+					}
+				}
+			}
+		}
+
+
+		std::string text;
+		int status = 0;
+
+		// XML Document
+		tinyxml2::XMLDocument doc;
+		status = doc.LoadFile(filename.c_str());
+		if (status != tinyxml2::XML_SUCCESS)
+			throw std::runtime_error("Error in function Instance::read_allocation_xml(). Coulnd't load xml document \"" + filename + "\"");
+
+		// Root node
+		tinyxml2::XMLElement* rootnode = doc.RootElement();
+		if (rootnode == nullptr)
+			throw std::runtime_error("Error in function Instance::read_allocation_xml(). XML does not contain root node");
+		text = rootnode->Value();
+		if (text != "Allocatie")
+			throw std::runtime_error("Error in function Instance::read_allocation_xml(). XML root node is not named \"Allocatie\"");
+
+		// Attributes root node
+		if (rootnode->Attribute("instantie") == nullptr)
+			throw std::runtime_error("Error in function Instance::read_allocation_xml(). Instantie does not contain an attribute \"instantie\"");
+		text = rootnode->Attribute("instantie");
+		if (_name != text)
+			throw std::runtime_error("Error in function Instance::read_allocation_xml(). Instantie name for Allocatie is not equal to Instantie name for other data");
+		// Other attributes (scenario, max_pct_veranderingen, max_rekentijd) not relevant here
+
+
+	// Child nodes
+		tinyxml2::XMLElement* child;
+		for (child = rootnode->FirstChildElement(); child; child = child->NextSiblingElement())
+		{
+			text = child->Value();
+			if (text != "Ophaling")
+				throw std::runtime_error("Error in function Instance::read_allocation_xml(). Child of \"Allocatie\" should be \"Ophaling\"");
+
+			if (child->Attribute("afval_type") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_allocation_xml(). Ophaling does not contain an attribute \"afval_type\"");
+			std::string afvaltype = child->Attribute("afval_type");
+
+			if (child->Attribute("zone") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_allocation_xml(). Ophaling does not contain an attribute \"zone\"");
+			std::string zone = child->Attribute("zone");
+
+			if (child->Attribute("dag") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_allocation_xml(). Ophaling does not contain an attribute \"dag\"");
+			std::string daystr = child->Attribute("dag");
+			int day = _dag_naam_index.at(daystr);
+
+			if (child->Attribute("week") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_allocation_xml(). Ophaling does not contain an attribute \"week\"");
+			std::string weekstr = child->Attribute("week");
+			int week = std::stoi(weekstr) - 1;
+
+			if (child->Attribute("hoeveelheid") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_allocation_xml(). Ophaling does not contain an attribute \"hoeveelheid\"");
+			std::string hoeveelheidstr = child->Attribute("hoeveelheid");
+			double hoeveelheid = std::stod(hoeveelheidstr);
+
+
+			// zet om naar indices
+			int waste_type_index, zone_index;
+			for (int t = 0; t < nb_waste_types(); ++t) {
+				if (waste_type(t) == afvaltype) {
+					waste_type_index = t;
+					break;
+				}
+			}
+			for (int m = 0; m < nb_zones(); ++m) {
+				if (zone_name(m) == zone) {
+					zone_index = m;
+					break;
+				}
+			}
+
+			// sla op in vector
+			_sol_alloc_x_tmdw[waste_type_index * nb_zones() * nb_days() * nb_weeks() + zone_index * nb_days() * nb_weeks() + day * nb_weeks() + week] = hoeveelheid;
+		}
+	}
+
+	void Instance::read_routes_xml(const std::string& filename)
+	{
+		std::string text;
+		int status = 0;
+
+		// XML Document
+		tinyxml2::XMLDocument doc;
+		status = doc.LoadFile(filename.c_str());
+		if (status != tinyxml2::XML_SUCCESS)
+			throw std::runtime_error("Error in function Instance::read_routes_xml(). Coulnd't load xml document \"" + filename + "\"");
+
+		// Root node
+		tinyxml2::XMLElement* rootnode = doc.RootElement();
+		if (rootnode == nullptr)
+			throw std::runtime_error("Error in function Instance::read_routes_xml(). XML does not contain root node");
+		text = rootnode->Value();
+		if (text != "Routes")
+			throw std::runtime_error("Error in function Instance::read_routes_xml(). XML root node is not named \"Routes\"");
+
+		// Attributes root node
+		if (rootnode->Attribute("instantie") == nullptr)
+			throw std::runtime_error("Error in function Instance::read_routes_xml(). Instantie does not contain an attribute \"instantie\"");
+		text = rootnode->Attribute("instantie");
+		if (_name != text)
+			throw std::runtime_error("Error in function Instance::read_routes_xml(). Instantie name for Routes is not equal to Instantie name for other data");
+		// Other attributes (vaste_kosten, variabele_kosten, max_rekentijd, max_trucks_per_type, max_nb_segmenten) not relevant here
+
+
+		// Child nodes
+		tinyxml2::XMLElement* child;
+		for (child = rootnode->FirstChildElement(); child; child = child->NextSiblingElement())
+		{
+			_routes.push_back(Route());
+
+			text = child->Value();
+			if (text != "Route")
+				throw std::runtime_error("Error in function Instance::read_routes_xml(). Child of \"Routes\" should be \"Route\"");
+
+			if (child->Attribute("afval_type") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_routes_xml(). Route does not contain an attribute \"afval_type\"");
+			std::string afvaltype = child->Attribute("afval_type");
+			_routes.back()._waste_type = afvaltype;
+
+			if (child->Attribute("dag") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_routes_xml(). Route does not contain an attribute \"dag\"");
+			std::string dagstr = child->Attribute("dag");
+			int dag = _dag_naam_index.at(dagstr);
+			_routes.back()._day = dag;
+
+			if (child->Attribute("week") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_routes_xml(). Route does not contain an attribute \"week\"");
+			std::string weekstr = child->Attribute("week");
+			int week = std::stoi(weekstr) - 1;
+			_routes.back()._week = week;
+
+			// Pickups
+			tinyxml2::XMLElement* pickup;
+			for (pickup = child->FirstChildElement(); pickup; pickup = pickup->NextSiblingElement())
+			{
+				_routes.back()._pickups.push_back(std::pair<std::string, double>());
+
+				text = child->Value();
+				if (text != "Ophaling")
+					throw std::runtime_error("Error in function Instance::read_routes_xml(). Child of \"Route\" should be \"Ophaling\"");
+
+				if (child->Attribute("zone") == nullptr)
+					throw std::runtime_error("Error in function Instance::read_routes_xml(). Ophaling does not contain an attribute \"zone\"");
+				std::string zone = child->Attribute("zone");
+				_routes.back()._pickups.back().first = zone;
+
+				if (child->Attribute("hoeveelheid") == nullptr)
+					throw std::runtime_error("Error in function Instance::read_routes_xml(). Ophaling does not contain an attribute \"hoeveelheid\"");
+				std::string hoeveelheidstr = child->Attribute("hoeveelheid"); // in kg
+				double hoeveelheid = std::stod(hoeveelheidstr);
+				_routes.back()._pickups.back().second = hoeveelheid;
+			}
+		}
+	}
+
 	void Instance::clear_data()
 	{
 		_waste_types.clear();
@@ -275,6 +442,7 @@ namespace IVM
 		_zones.clear();
 
 		_sol_alloc_x_tmdw.clear();
+		_routes.clear();
 	}
 
 	bool Instance::current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const
@@ -328,6 +496,16 @@ namespace IVM
 		auto& vec = _collection_points[index]._allowed_waste_types;
 		if (std::find(vec.begin(), vec.end(), waste_type) != vec.end())
 			return true;
+		return false;
+	}
+
+	bool Instance::route_visits_zone(size_t index_route, size_t index_zone) const
+	{
+		for (auto&& v : _routes[index_route]._pickups)
+		{
+			if (v.first == _zones[index_zone]._name)
+				return true;
+		}
 		return false;
 	}
 

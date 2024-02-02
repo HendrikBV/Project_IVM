@@ -1,11 +1,6 @@
 /*
-	Copyright (c) 2023 Hendrik Vermuyten
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
+	Copyright (c) 2024 KU Leuven
+	Code author: Hendrik Vermuyten
 */
 
 
@@ -91,6 +86,7 @@ namespace IVM
 		 */
 		double _objective_value = -1;
 
+
 	public:
 		/*!
 		 *	@brief Set the fraction of deviations that is allowed compared to the current calendar
@@ -134,8 +130,11 @@ namespace IVM
 		void run(const Instance& data);
 	};
 
-	///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////
 
+	/*!
+	 *	@brief The model to determine the pickup routes
+	 */
 	class IP_model_routing
 	{
 		/*!
@@ -248,6 +247,7 @@ namespace IVM
 		 */
 		double _objective_value = -1;
 
+
 	public:
 
 		/*!
@@ -292,6 +292,132 @@ namespace IVM
 		 *  @param	day		The day for which to build the routing problem
 		 */
 		void run(const Instance& data, size_t day);
+	};
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*!
+	 *	@brief The model to assign generated routes to days
+	 */
+	class IP_model_allocation_post
+	{
+		/*!
+		 *	@brief CPLEX environment pointer
+		 */
+		CPXENVptr env = nullptr;
+
+		/*!
+		 *	@brief CPLEX LP pointer
+		 */
+		CPXLPptr problem = nullptr;
+
+		/*!
+		 *	@brief Initialize the CPLEX environment & problem
+		 */
+		void initialize_cplex();
+
+		/*!
+		 *	@brief Build the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void build_problem(const Instance& data);
+
+		/*!
+		 *	@brief Solve the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void solve_problem(const Instance& data);
+
+		/*!
+		 *	@brief Release CPLEX memory
+		 */
+		void clear_cplex();
+
+		/*!
+		 *	@brief The scenario (which constraints are in the model)
+		 */
+		int _scenario = 0;
+
+		/*!
+		 *	@brief The maximum computation time (in seconds)
+		 */
+		double _max_computation_time = 600;
+
+		/*!
+		 *	@brief The objective value of the solution
+		 */
+		double _objective_value = -1;
+
+		/*!
+		 *	@brief The coefficient of the z_tmdw variables in the objective function
+		 */
+		double _objcoeff_z_tmdw = 1;
+
+		/*!
+		 *	@brief The coefficient of the beta variable in the objective function
+		 */
+		double _objcoeff_beta = 1;
+
+		/*!
+		 *	@brief The coefficient of the theta_tm variables in the objective function
+		 */
+		double _objcoeff_theta_tm = 1;
+
+
+	public:
+
+		/*!
+		 *	@brief The possible scenarios
+		 */
+		enum Scenario
+		{
+			FIXED_WEEK_SAME_DAY,	///< Restafval in ene week, GFT in andere week, zelfde dag
+			FIXED_WEEK_FREE_DAY,	///< Restafval in ene week, GFT in andere week, niet noodzakelijk zelfde dag
+			FREE_WEEK_FREE_DAY,		///< Vrije keuze van week of dag
+			CURRENT_CALENDAR		///< Huidige kalender (niet echt optimalisatie)
+		};
+
+		/*!
+		 *	@brief Set the scenario
+		 *  @param scenario	The scenario
+		 */
+		void set_scenario(int scenario) { _scenario = scenario; }
+
+		/*!
+		 *	@brief Set the maximum computation time
+		 *  @param max_computation_time	The maximum computation time
+		 */
+		void set_max_computation_time(double max_computation_time) { _max_computation_time = max_computation_time; }
+
+		/*!
+		 *	@brief Set the coefficient of the z_tmdw variables in the objective function
+		 *  @param	value	The new value for the coefficient
+		 */
+		void set_coefficient_z_tmdw(double value) { _objcoeff_z_tmdw = value; }
+
+		/*!
+		 *	@brief Set the coefficient of the beta variable in the objective function
+		 *  @param	value	The new value for the coefficient
+		 */
+		void set_coefficient_beta(double value) { _objcoeff_beta = value; }
+
+		/*!
+		 *	@brief Set the coefficient of the theta_tm variables in the objective function
+		 *  @param	value	The new value for the coefficient
+		 */
+		void set_coefficient_theta_tm(double value) { _objcoeff_theta_tm = value; }
+
+		/*!
+		 *	@brief Get the objective value of the solution
+		 *  @returns The objective value
+		 */
+		double objective_value() const { return _objective_value; }
+
+		/*!
+		 *	@brief Build and solve the MIP model
+		 *  @param	data	The problem data
+		 */
+		void run(const Instance& data);
 	};
 }
 

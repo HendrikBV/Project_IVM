@@ -147,6 +147,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="IP_model_allocation_post.cpp" />
     <ClCompile Include="IP_model_routing.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="tinyxml2.cpp">

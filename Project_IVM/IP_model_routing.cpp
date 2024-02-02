@@ -1,11 +1,6 @@
 /*
-	Copyright (c) 2023 Hendrik Vermuyten
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
+	Copyright (c) 2024 KU Leuven
+	Code author: Hendrik Vermuyten
 */
 
 
@@ -105,7 +100,7 @@ namespace IVM
 
 	void IP_model_routing::build_problem(const Instance& data, size_t day)
 	{
-		std::cout << "\n\n\nStart building the routing model for day " << day + 1;
+		std::cout << "\n\n\n\nStart building the routing model for day " << day + 1;
 		auto start_time = std::chrono::system_clock::now();
 
 		char error_text[CPXMESSAGEBUFSIZE];
@@ -896,7 +891,59 @@ namespace IVM
 			}
 		}
 
-		// 9. x_qvijk - y_qv <= 0   forall q,v,i,j,k
+		// 9. sum(i,j) x_qvijk <= 1   forall q,v,k
+		for (int q = 0; q < nb_truck_types; ++q)
+		{
+			for (int v = 0; v < _max_nb_trucks; ++v)
+			{
+				for (int k = 0; k < _max_nb_segments; ++k)
+				{
+					++nb_constraints;
+
+					rhs[0] = 1;
+					sense[0] = 'L'; 
+					matbeg[0] = 0;
+
+					nonzeroes = 0;
+
+					// sum(i,j) x_qvijk
+					for (int i = 0; i < nb_locations; ++i)
+					{
+						for (int j = 0; j < nb_locations; ++j)
+						{
+							const size_t index = _index_x_qvijk(data, q, v, i, j, k);
+							if (index >= nb_variables)
+								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
+
+							matind[nonzeroes] = index;
+							matval[nonzeroes] = 1;
+							++nonzeroes;
+						}
+					}
+
+					if (nonzeroes >= maxnonzeroes)
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+					status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+					}
+
+					// change name of constraint
+					std::string conname = "c9_" + std::to_string(q + 1) + "_" + std::to_string(v + 1) + "_" + std::to_string(k + 1);
+					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
+		// 10. x_qvijk - y_qv <= 0   forall q,v,i,j,k
 		for (int q = 0; q < nb_truck_types; ++q)
 		{
 			for (int v = 0; v < _max_nb_trucks; ++v)
@@ -948,7 +995,7 @@ namespace IVM
 							}
 
 							// change name of constraint
-							std::string conname = "c9_" + std::to_string(q + 1) + "_" + std::to_string(v + 1) + "_" + std::to_string(i + 1)
+							std::string conname = "c10_" + std::to_string(q + 1) + "_" + std::to_string(v + 1) + "_" + std::to_string(i + 1)
 								+ "_" + std::to_string(j + 1) +"_" + std::to_string(k + 1);
 							status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 							if (status != 0)
@@ -1006,6 +1053,14 @@ namespace IVM
 			throw std::runtime_error("Error in function IP_model_allocation::solve_problem(). \nCouldn't set optimality tolerance. \nReason: " + std::string(error_text));
 		}
 
+		// Set emphasis feasibility
+		status = CPXsetintparam(env, CPXPARAM_Emphasis_MIP, CPX_MIPEMPHASIS_FEASIBILITY);
+		if (status != 0)
+		{
+			CPXgeterrorstring(env, status, error_text);
+			throw std::runtime_error("Error in function IP_model_allocation::solve_problem(). \nCouldn't set search strategy. \nReason: " + std::string(error_text));
+		}
+
 		// Set presolve off
 		/*status = CPXsetintparam(env, CPXPARAM_Preprocessing_Presolve, CPX_OFF);
 		if (status != 0)
@@ -1019,7 +1074,7 @@ namespace IVM
 		solution_problem = std::make_unique<double[]>(numvar);
 
 		// Optimize the problem
-		std::cout << "\n\nIP_model_routing: CPLEX is solving the problem ...\n\n";
+		std::cout << "\n\nIP_model_routing: CPLEX is solving the problem ...";
 		auto start_time = std::chrono::system_clock::now();
 
 		status = CPXmipopt(env, problem);
@@ -1134,7 +1189,7 @@ namespace IVM
 							throw std::runtime_error("Error in function IP_model_routing::solve_problem(). \nCouldn't access variable. \nReason: " + std::string(error_text));
 						}
 						double y = solution_problem[index_y];
-						y_qv.push_back(y);
+						y_qv.push_back(static_cast<int>(y + 0.0001));
 
 
 						std::string varname_beta = "beta_" + std::to_string(q + 1) + "_" + std::to_string(v + 1);
@@ -1212,7 +1267,7 @@ namespace IVM
 									for (int k = 0; k < _max_nb_segments; ++k) {
 										for (int i = 0; i < nb_locations; ++i) {
 											for (int j = 0; j < nb_locations; ++j) {
-												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k) + 0.000001;
+												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k);
 												if (xval > 0) {
 													std::string origin, destination;
 													if (i < nb_zones)
@@ -1277,7 +1332,7 @@ namespace IVM
 						struct Route
 						{
 							std::string trucktype;
-							double hours;
+							double hours = 0;
 							std::vector<std::string> destinations; // e.g. depot, zoneA, CP1, zoneB, CP1, depot
 							std::vector<int> amounts;	// amounts picked up at respective zones
 							int nb_times_used = 1;
@@ -1309,7 +1364,7 @@ namespace IVM
 									for (int k = 0; k < _max_nb_segments; ++k) {
 										for (int i = 0; i < nb_locations; ++i) {
 											for (int j = 0; j < nb_locations; ++j) {
-												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k) + 0.000001;
+												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k);
 												if (xval > 0) {
 													std::string destination;
 													if (j < nb_zones)
@@ -1415,7 +1470,7 @@ namespace IVM
 									for (int k = 0; k < _max_nb_segments; ++k) {
 										for (int i = 0; i < nb_locations; ++i) {
 											for (int j = 0; j < nb_locations; ++j) {
-												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k) + 0.000001;
+												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k);
 												if (xval > 0) {
 													std::string destination;
 													if (j < nb_zones)

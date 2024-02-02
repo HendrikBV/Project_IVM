@@ -1,11 +1,6 @@
 /*
-	Copyright (c) 2023 Hendrik Vermuyten
-
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
+	Copyright (c) 2024 KU Leuven
+	Code author: Hendrik Vermuyten
 */
 
 
@@ -88,11 +83,11 @@ namespace aux
 		file << "<?xml version=\"1.0\"?>\n<Instantie naam=\"" << name_instance << "\" aantal_dagen=\"5\" aantal_weken=\"2\" max_bezoeken=\"1\">"
 			<< "\n\t<Afvaltype naam=\"GFT\" lostijd=\"0.17\"/>"
 			<< "\n\t<Afvaltype naam=\"restafval\" lostijd=\"0.17\"/>"
-			<< "\n\t<Trucktype naam=\"truck_GFT\" max_uren=\"7.5\" vaste_kosten=\"100\" variabele_kosten=\"87\">"
+			<< "\n\t<Trucktype naam=\"truck_GFT\" max_uren=\"7.5\" vaste_kosten=\"800\" variabele_kosten=\"87\">"
 			<< "\n\t\t<Capaciteit afvaltype=\"GFT\" cap=\"10.2\"/>"
 			<< "\n\t\t<Capaciteit afvaltype=\"restafval\" cap=\"0\"/>"
 			<< "\n\t</Trucktype>"
-			<< "\n\t<Trucktype naam=\"truck_restafval\" max_uren=\"7.5\" vaste_kosten=\"100\" variabele_kosten=\"87\">"
+			<< "\n\t<Trucktype naam=\"truck_restafval\" max_uren=\"7.5\" vaste_kosten=\"800\" variabele_kosten=\"87\">"
 			<< "\n\t\t<Capaciteit afvaltype=\"GFT\" cap=\"0\"/>"
 			<< "\n\t\t<Capaciteit afvaltype=\"restafval\" cap=\"10.2\"/>"
 			<< "\n\t</Trucktype>";
