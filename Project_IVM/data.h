@@ -455,12 +455,6 @@ namespace IVM
 		double x_tmdw(size_t waste_type, size_t zone, size_t day, size_t week) const;
 
 		/*!
-		 *	@brief	Set the solution from the allocation model
-		 *  @param	x	The values of the x_tmdw variables
-		 */
-		void set_solution_x(const std::vector<double>& x) { _sol_alloc_x_tmdw = x; }
-
-		/*!
 		 *	@brief	Get the number of generated routes
 		 *  @returns	The number of routes
 		 */

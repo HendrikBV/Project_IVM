@@ -1,5 +1,8 @@
 # Project_IVM
 
-Deze code implementeert een optimalisatiemodel voor de bepaling van de beste routes voor afvalophaling.
+Deze code implementeert optimalisatiemodellen voor de bepaling van de beste routes en ophaalkalenders voor afvalophaling.
 
-De data worden via een XML-bestand ingelezen. In een eerste stap wordt een geheeltallig lineair optimalisatiemodel opgelost om te bepalen in welke zones (gemeentes) op welke dagen welk type afval wordt opgehaald. Het doel van dit model is om de afvalophaling zo gelijk mogelijk te spreiden over de verschillende dagen, zodat het aantal benodigde vrachtwagens geminimaliseerd wordt. In een tweede stap wordt een geheeltallig lineair optimalisatiemodel opgelost om voor elke dag de routes van de vrachtwagens te bepalen die de ophaling doen. Dit model werkt met de dagen en ophaalhoeveelheiden bepaald in het vorige model. Vervolgens probeert het routes te vinden om aan deze beperkingen te voldoen met zo kort mogelijke rijtijden en zo weinig mogelijk vrachtwagens.
+Het eerste model is "allocatiepre". Dit model maakt een kalender die de ophaling zo gelijk mogelijk spreidt.
+Het tweede model is "routing". Dit model bepaalt de optimale routes gegeven een ophaalkalender.
+Het derde model is "allocatiepost". Dit model wijst gegenereerde ophaalroutes toe aan ophaaldagen om een ophaalkalender te maken.
+De MIP-solver die wordt gebruik is CPLEX.

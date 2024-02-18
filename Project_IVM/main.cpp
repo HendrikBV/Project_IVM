@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
 			if (result.count("scenario")) {
 				scenario = result["scenario"].as<int>();
 				if (scenario < 0 || scenario > 3) {
-					std::cerr << "\nScenario moet gelijk zijn aan 0, 1, 2 of 3";
+					std::cerr << "\nScenario moet gelijk zijn aan 0, 1, 2 of 3\nWe gebruiken dan maar scenario 2 (FREE_WEEK_FREE_DAY).";
 					scenario = IVM::IP_model_allocation::FREE_WEEK_FREE_DAY;
 				}
 			}
@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
 			if (result.count("scenario")) {
 				scenario = result["scenario"].as<int>();
 				if (scenario < 0 || scenario > 3) {
-					std::cerr << "\nScenario moet gelijk zijn aan 0, 1, 2 of 3\nWe gebruiken dan maar scenario 2 (FREE_WEEK_FREE_DAY).";
+					std::cerr << "\nScenario moet gelijk zijn aan 0, 1 of 2\nWe gebruiken dan maar scenario 2 (FREE_WEEK_FREE_DAY).";
 					scenario = IVM::IP_model_allocation_post::FREE_WEEK_FREE_DAY;
 				}
 			}

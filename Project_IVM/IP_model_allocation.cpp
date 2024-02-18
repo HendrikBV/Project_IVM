@@ -1040,7 +1040,7 @@ namespace IVM
 
 
 		// Optimize the problem
-		std::cout << "\n\n\nIP_model_allocation: CPLEX is solving the problem ...\n\n";
+		std::cout << "\n\nSolving the allocation problem ...";
 		auto start_time = std::chrono::system_clock::now();
 
 		status = CPXmipopt(env, problem);
@@ -1065,12 +1065,12 @@ namespace IVM
 		auto p = CPXgetstatstring(env, solstat, solstat_text);
 		if (p != nullptr)
 		{
-			std::cout << "\n\n\nDone solving ... \n\nSolution status: " << solstat_text;
+			std::cout << "\nSolution status: " << solstat_text;
 
 			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL || solstat == CPXMIP_TIME_LIM_FEAS)
 			{
 				_objective_value = objval;
-				std::cout << "\nObjval = " << objval;
+				std::cout << "\nObjective value = " << objval;
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
 
 				const size_t nb_waste_types = data.nb_waste_types();
@@ -1078,72 +1078,49 @@ namespace IVM
 				const size_t nb_days = data.nb_days();
 				const size_t nb_weeks = data.nb_weeks();
 
-				// Obtain values for variables
-				std::vector<double> x_tmdw;
-				std::vector<int> y_tmdw, z_tmdw;
-				std::vector<double> e_tdw;
-				x_tmdw.reserve(nb_waste_types * nb_zones * nb_days * nb_weeks);
-				y_tmdw.reserve(nb_waste_types * nb_zones * nb_days * nb_weeks);
-				z_tmdw.reserve(nb_waste_types * nb_zones * nb_days * nb_weeks);
-				e_tdw.reserve(nb_waste_types * nb_days * nb_weeks);
+				const int startindex_x_tmdw = 0;
+				const int startindex_y_tmdw = startindex_x_tmdw + nb_waste_types * nb_zones * nb_days * nb_weeks;
+				const int startindex_z_tmdw = startindex_y_tmdw + nb_waste_types * nb_zones * nb_days * nb_weeks;
+				const int startindex_e_tdw = startindex_z_tmdw + nb_waste_types * nb_zones * nb_days * nb_weeks;
 
-				for (int t = 0; t < nb_waste_types; ++t) {
-					for (int m = 0; m < nb_zones; ++m) {
-						for (int d = 0; d < nb_days; ++d) {
-							for (int w = 0; w < nb_weeks; ++w) {
-								double x = solution_problem[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
-								if (x < 0.00001)
-									x = 0;
-								x_tmdw.push_back(x);
+				// lambdas to get variable indices
+				auto index_x_tmdw = [startindex_x_tmdw, nb_zones, nb_days, nb_weeks](int t, int m, int d, int w) -> int {
+					return startindex_x_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+					};
+				auto index_y_tmdw = [startindex_y_tmdw, nb_zones, nb_days, nb_weeks](int t, int m, int d, int w) -> int {
+					return startindex_y_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+					};
+				auto index_z_tmdw = [startindex_z_tmdw, nb_zones, nb_days, nb_weeks](int t, int m, int d, int w) -> int {
+					return startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
+					};
+				auto index_e_tdw = [startindex_e_tdw, nb_days, nb_weeks](int t, int d, int w) -> int {
+					return startindex_e_tdw + t * nb_days * nb_weeks + d * nb_weeks + w;
+					};
 
-								int y = static_cast<int>(solution_problem[nb_waste_types * nb_zones * nb_days * nb_weeks + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w] + 0.1);
-								y_tmdw.push_back(y);
 
-								int z = static_cast<int>(solution_problem[2 * nb_waste_types * nb_zones * nb_days * nb_weeks + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w] + 0.1);
-								z_tmdw.push_back(z);
-
-								if (m == 0) {
-									double e = solution_problem[3 * nb_waste_types * nb_zones * nb_days * nb_weeks + t * nb_days * nb_weeks + d * nb_weeks + w];
-									e_tdw.push_back(e);
-								}
-							}
-						}
-					}
-				}
-
-				// Store x variables in Instance object
-				{
-					auto& data_mutable = const_cast<Instance&>(data);
-					data_mutable.set_solution_x(x_tmdw);
-				}
 
 				// Write solution to file
 				{
 					std::ofstream solfile;
-					std::string filename = data.name_instance() + "_allocation.txt";
+					std::string filename = data.name_instance() + "_allocatie.txt";
 					solfile.open(filename);
 
-					solfile << "Instance: " << data.name_instance() << "\n";
-					if (_scenario == Scenario::FIXED_WEEK_SAME_DAY)
-						solfile << "\nScenario: fixed week & same day";
-					else if (_scenario == Scenario::FIXED_WEEK_FREE_DAY)
-						solfile << "\nScenario: fixed week & free day";
-					else if (_scenario == Scenario::FREE_WEEK_FREE_DAY)
-						solfile << "\nScenario: free week & free day";
-					solfile << "\nMax pct. changes: " << _fraction_allowed_deviations;
-					solfile << "\nMax computation time: " << _max_computation_time;
-
-					solfile << "\n\nObjective value = " << objval;
+					solfile << "Instantie: " << data.name_instance() << "\n"
+						<< "\nScenario: " << scenario_name()
+						<< "\nMax pct. verandering: " << _fraction_allowed_deviations
+						<< "\nMax rekentijd (s): " << _max_computation_time
+						<< "\n\nDoelfunctiewaarde = " << objval;
 
 					solfile << "\n\nx_tmdw  (opgehaalde hoeveelheid)";
 					for (int t = 0; t < nb_waste_types; ++t) {
 						for (int m = 0; m < nb_zones; ++m) {
 							for (int d = 0; d < nb_days; ++d) {
 								for (int w = 0; w < nb_weeks; ++w) {
-									double val = x_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
-									if (val > 0.000001) {
-										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": x = " << val;
-									}									
+									int index_var = index_x_tmdw(t, m, d, w);
+									double value = solution_problem[index_var];
+									if (value > 0.000001) {
+										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": x = " << value;
+									}
 								}
 							}
 						}
@@ -1153,9 +1130,10 @@ namespace IVM
 						for (int m = 0; m < nb_zones; ++m) {
 							for (int d = 0; d < nb_days; ++d) {
 								for (int w = 0; w < nb_weeks; ++w) {
-									int val = y_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
-									if (val > 0) {
-										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": y = " << val;
+									int index_var = index_y_tmdw(t, m, d, w);
+									int value = static_cast<int>(solution_problem[index_var] + 0.01);
+									if (value > 0) {
+										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": y = " << value;
 									}
 								}
 							}
@@ -1166,9 +1144,10 @@ namespace IVM
 						for (int m = 0; m < nb_zones; ++m) {
 							for (int d = 0; d < nb_days; ++d) {
 								for (int w = 0; w < nb_weeks; ++w) {
-									int val = z_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
-									if (val > 0) {
-										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": z = " << val;
+									int index_var = index_z_tmdw(t, m, d, w);
+									int value = static_cast<int>(solution_problem[index_var] + 0.01);
+									if (value > 0) {
+										solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m) << ", " << data.day_name(d) << ", week " << w + 1 << ": z = " << value;
 									}
 								}
 							}
@@ -1178,15 +1157,16 @@ namespace IVM
 					for (int t = 0; t < nb_waste_types; ++t) {
 						for (int d = 0; d < nb_days; ++d) {
 							for (int w = 0; w < nb_weeks; ++w) {
-								double val = e_tdw[t * nb_days * nb_weeks + d * nb_weeks + w];
-								if (val > 0.000001) {
-									solfile << "\n" << data.waste_type(t) << ", " << data.day_name(d) << ", week " << w + 1 << ": e = " << val;
+								int index_var = index_e_tdw(t, d, w);
+								double value = solution_problem[index_var];
+								if (value > 0.000001) {
+									solfile << "\n" << data.waste_type(t) << ", " << data.day_name(d) << ", week " << w + 1 << ": e = " << value;
 								}
 							}
 						}
 					}
 
-					// other layout
+					// andere layout
 					for (int t = 0; t < nb_waste_types; ++t) {
 						solfile << "\n\n\n\nKalender " << data.waste_type(t) << "\nZone\tMaandag\tDinsdag\tWoensdag\tDonderdag\tVrijdag\tMaandag\tDinsdag\tWoensdag\tDonderdag\tVrijdag";
 						for (int m = 0; m < nb_zones; ++m) {
@@ -1194,9 +1174,11 @@ namespace IVM
 							for (int w = 0; w < nb_weeks; ++w) {
 								for (int d = 0; d < nb_days; ++d) {
 									solfile << "\t";
-									double val = x_tmdw[t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w];
-									if (val > 0.000001) {
-										solfile << val;
+
+									int index_var = index_x_tmdw(t, m, d, w);
+									double value = solution_problem[index_var];
+									if (value > 0.000001) {
+										solfile << value;
 									}
 								}
 							}
@@ -1204,6 +1186,42 @@ namespace IVM
 					}
 
 					solfile.flush();
+				}
+
+
+				// Write output to XML-file
+				{
+					std::ofstream solfile;
+					std::string filename = "oplossing_allocatie.xml";
+					solfile.open(filename);
+
+					solfile << "<?xml version=\"1.0\"?>"
+						<< "\n<Allocatie instantie=\"" << data.name_instance() << "\""
+						<< " scenario=\"" << scenario_name() << "\""
+						<< " max_pct_veranderingen=\"" << _fraction_allowed_deviations << "\""
+						<< " max_rekentijd=\"" << _max_computation_time << "\">";
+
+					// Ophalingen
+					for (int t = 0; t < nb_waste_types; ++t) {
+						for (int m = 0; m < nb_zones; ++m) {
+							for (int d = 0; d < nb_days; ++d) {
+								for (int w = 0; w < nb_weeks; ++w) {
+									int index_var = index_x_tmdw(t, m, d, w);
+									double value = solution_problem[index_var];
+									if (value > 0.000001) {
+										solfile << "\n\t<Ophaling afval_type=\"" << data.waste_type(t) << "\""
+											<< " zone=\"" << data.zone_name(m) << "\""
+											<< " dag=\"" << data.day_name(d) << "\""
+											<< " week=\"" << w + 1 << "\""
+											<< " hoeveelheid=\"" << value << "\"/>";
+									}
+								}
+							}
+						}
+					}
+
+					// Algemeen
+					solfile << "\n</Allocatie>";
 				}
 			}
 		}
@@ -1237,6 +1255,18 @@ namespace IVM
 		build_problem(data);
 		solve_problem(data);
 		clear_cplex();
+	}
+
+	const std::string IP_model_allocation::scenario_name() const
+	{
+		if (_scenario == Scenario::FIXED_WEEK_SAME_DAY)
+			return "vaste week en zelfde dag";
+		else if (_scenario == Scenario::FIXED_WEEK_FREE_DAY)
+			return "vaste week en vrije dag";
+		else if (_scenario == Scenario::FREE_WEEK_FREE_DAY)
+			return "vrije week en vrije dag";
+		else if (_scenario == Scenario::CURRENT_CALENDAR)
+			return "huidige kalender met wekelijkse ophaling restafval";
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////

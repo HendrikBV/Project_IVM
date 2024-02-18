@@ -848,7 +848,7 @@ namespace IVM
 
 
 		// Optimize the problem
-		std::cout << "\n\n\nIP_model_allocation: CPLEX is solving the problem ...\n\n";
+		std::cout << "\n\nSolving the post allocation problem ... ";
 		auto start_time = std::chrono::system_clock::now();
 
 		status = CPXmipopt(env, problem);
@@ -873,12 +873,12 @@ namespace IVM
 		auto p = CPXgetstatstring(env, solstat, solstat_text);
 		if (p != nullptr)
 		{
-			std::cout << "\n\n\nDone solving ... \n\nSolution status: " << solstat_text;
+			std::cout << "\nSolution status: " << solstat_text;
 
 			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL || solstat == CPXMIP_TIME_LIM_FEAS)
 			{
 				_objective_value = objval;
-				std::cout << "\nObjval = " << objval;
+				std::cout << "\nObjective value = " << objval;
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
 
 				const size_t nb_routes = data.nb_routes();

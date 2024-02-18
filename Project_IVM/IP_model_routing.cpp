@@ -47,65 +47,8 @@ namespace IVM
 		}
 	}
 
-	size_t IP_model_routing::_index_x_qvijk(const Instance& data, int q, int v, int i, int j, int k) const
-	{
-		const size_t nb_locations = data.nb_zones() + 1 + data.nb_collection_points();
-
-		assert(q < data.nb_truck_types());
-		assert(v < _max_nb_trucks);
-		assert(i < nb_locations);
-		assert(j < nb_locations);
-		assert(k < _max_nb_segments);
-
-		return q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments
-			+ i * nb_locations * _max_nb_segments + j * _max_nb_segments + k;
-	}
-
-	size_t IP_model_routing::_index_w_tqvik(const Instance& data, int t, int q, int v, int i_zone, int k) const
-	{
-		const size_t nb_locations = data.nb_zones() + 1 + data.nb_collection_points();
-		const size_t startindex = data.nb_truck_types() * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments;
-
-		assert(t < data.nb_waste_types());
-		assert(q < data.nb_truck_types());
-		assert(v < _max_nb_trucks);
-		assert(i_zone < data.nb_zones());
-		assert(k < _max_nb_segments);
-
-		return startindex + t * data.nb_truck_types() * _max_nb_trucks * data.nb_zones() * _max_nb_segments + q * _max_nb_trucks * data.nb_zones() * _max_nb_segments
-			+ v * data.nb_zones() * _max_nb_segments + i_zone * _max_nb_segments + k;
-	}
-
-	size_t IP_model_routing::_index_y_qv(const Instance& data, int q, int v) const
-	{
-		const size_t nb_locations = data.nb_zones() + 1 + data.nb_collection_points();
-		const size_t startindex = (data.nb_truck_types() * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments)
-			+ (data.nb_waste_types() * data.nb_truck_types() * _max_nb_trucks * data.nb_zones() * _max_nb_segments);
-
-		assert(q < data.nb_truck_types());
-		assert(v < _max_nb_trucks);
-
-		return startindex + q * _max_nb_trucks + v;
-	}
-
-	size_t IP_model_routing::_index_beta_qv(const Instance& data, int q, int v) const
-	{
-		const size_t nb_locations = data.nb_zones() + 1 + data.nb_collection_points();
-		const size_t startindex = (data.nb_truck_types() * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments)
-			+ (data.nb_waste_types() * data.nb_truck_types() * _max_nb_trucks * data.nb_zones() * _max_nb_segments)
-			+ (data.nb_truck_types() * _max_nb_trucks);
-
-		assert(q < data.nb_truck_types());
-		assert(v < _max_nb_trucks);
-
-		return startindex + q * _max_nb_trucks + v;
-	}
-
 	void IP_model_routing::build_problem(const Instance& data, size_t day)
 	{
-		std::cout << "\n\n\n\nStart building the routing model for day " << day + 1;
-		auto start_time = std::chrono::system_clock::now();
-
 		char error_text[CPXMESSAGEBUFSIZE];
 		int status = 0;
 		double obj[1];			// Objective function
@@ -160,6 +103,7 @@ namespace IVM
 		int nb_variables = -1;
 
 		// variable x_qvijk   day is given
+		const int startindex_x_qvijk = 0;
 		for (int q = 0; q < nb_truck_types; ++q)
 		{
 			for (int v = 0; v < _max_nb_trucks; ++v)
@@ -200,6 +144,7 @@ namespace IVM
 		}
 
 		// variable w_tqvik   day is given
+		const int startindex_w_tqvik = startindex_x_qvijk + nb_truck_types * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments;
 		for (int t = 0; t < nb_waste_types; ++t)
 		{
 			for (int q = 0; q < nb_truck_types; ++q)
@@ -238,6 +183,7 @@ namespace IVM
 		}
 
 		// variable y_qv   day is given
+		const int startindex_y_qv = startindex_w_tqvik + nb_waste_types * nb_truck_types * _max_nb_trucks * nb_zones * _max_nb_segments;
 		for (int q = 0; q < nb_truck_types; ++q)
 		{
 			for (int v = 0; v < _max_nb_trucks; ++v)
@@ -271,6 +217,7 @@ namespace IVM
 		}
 
 		// variable beta_qv   day is given
+		const int startindex_beta_qv = startindex_y_qv + nb_waste_types * _max_nb_trucks;
 		for (int q = 0; q < nb_truck_types; ++q)
 		{
 			for (int v = 0; v < _max_nb_trucks; ++v)
@@ -298,6 +245,25 @@ namespace IVM
 			}
 		}
 
+
+		// lambdas to get variable indices
+		const int nb_segments = _max_nb_segments;
+		const int nb_trucks = _max_nb_trucks;
+		auto index_x_qvijk = [startindex_x_qvijk, nb_trucks, nb_locations, nb_segments](int q, int v, int i, int j, int k) -> int {
+			return startindex_x_qvijk + q * nb_trucks * nb_locations * nb_locations * nb_segments + v * nb_locations * nb_locations * nb_segments
+				+ i * nb_locations * nb_segments + j * nb_segments + k;
+			};
+		auto index_w_tqvik = [startindex_w_tqvik, nb_truck_types, nb_trucks, nb_zones, nb_segments](int t, int q, int v, int i_zone, int k) -> int {
+			return startindex_w_tqvik + t * nb_truck_types * nb_trucks * nb_zones * nb_segments + q * nb_trucks * nb_zones * nb_segments
+				+ v * nb_zones * nb_segments + i_zone * nb_segments + k;
+			};
+		auto index_y_qv = [startindex_y_qv, nb_trucks](int q, int v) -> int {
+			return startindex_y_qv + q * nb_trucks + v;
+			};
+		auto index_beta_qv = [startindex_beta_qv, nb_trucks](int q, int v) -> int {
+			return startindex_beta_qv + q * nb_trucks + v;
+			};
+
 		nb_variables = CPXgetnumcols(env, problem);
 
 
@@ -320,7 +286,7 @@ namespace IVM
 
 				// beta_qv
 				{
-					const size_t index = _index_beta_qv(data, q, v);
+					const size_t index = index_beta_qv(q, v);
 					if (index >= nb_variables)
 						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -358,7 +324,7 @@ namespace IVM
 								coeff += -data.time_driving_collectionpoint_depot(i - nb_zones - 1);
 							}
 
-							const size_t index = _index_x_qvijk(data, q, v, i, j, k);
+							const size_t index = index_x_qvijk(q, v, i, j, k);
 							if (index >= nb_variables)
 								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -376,7 +342,7 @@ namespace IVM
 					{
 						for (int k = 0; k < _max_nb_segments; ++k)
 						{
-							const size_t index = _index_w_tqvik(data, t, q, v, m, k);
+							const size_t index = index_w_tqvik(t, q, v, m, k);
 							if (index >= nb_variables)
 								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -424,7 +390,7 @@ namespace IVM
 
 				// beta_qv
 				{
-					const size_t index = _index_beta_qv(data, q, v);
+					const size_t index = index_beta_qv(q, v);
 					if (index >= nb_variables)
 						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -475,7 +441,7 @@ namespace IVM
 
 							// w_tqvik
 							{
-								const size_t index = _index_w_tqvik(data, t, q, v, m, k);
+								const size_t index = index_w_tqvik(t, q, v, m, k);
 								if (index >= nb_variables)
 									throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -487,7 +453,7 @@ namespace IVM
 							// - L_tq sum(j) x_qvjik (aankomen bij i)
 							for(int j = 0; j < nb_locations; ++j)
 							{
-								const size_t index = _index_x_qvijk(data, q, v, j, m, k);
+								const size_t index = index_x_qvijk(q, v, j, m, k);
 								if (index >= nb_variables)
 									throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -561,7 +527,7 @@ namespace IVM
 					{
 						for (int k = 0; k < _max_nb_segments; ++k)
 						{
-							const size_t index = _index_w_tqvik(data, t, q, v, m, k);
+							const size_t index = index_w_tqvik(t, q, v, m, k);
 							if (index >= nb_variables)
 								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -612,7 +578,7 @@ namespace IVM
 					const int index_depot = nb_zones;
 					const int index_k = 0;
 
-					const size_t index = _index_x_qvijk(data, q, v, index_depot, j, index_k);
+					const size_t index = index_x_qvijk(q, v, index_depot, j, index_k);
 					if (index >= nb_variables)
 						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -623,7 +589,7 @@ namespace IVM
 
 				// y_qv
 				{
-					const int index = _index_y_qv(data, q, v);
+					const int index = index_y_qv(q, v);
 					if (index >= nb_variables)
 						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -673,7 +639,7 @@ namespace IVM
 					{
 						const int index_depot = nb_zones;
 
-						const size_t index = _index_x_qvijk(data, q, v, i, index_depot, k);
+						const size_t index = index_x_qvijk(q, v, i, index_depot, k);
 						if (index >= nb_variables)
 							throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -685,7 +651,7 @@ namespace IVM
 
 				// y_qv
 				{
-					const size_t index = _index_y_qv(data, q, v);
+					const size_t index = index_y_qv(q, v);
 					if (index >= nb_variables)
 						throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -744,7 +710,7 @@ namespace IVM
 
 								// x_qvijk
 								{
-									const size_t index = _index_x_qvijk(data, q, v, i, j, k);
+									const size_t index = index_x_qvijk(q, v, i, j, k);
 									if (index >= nb_variables)
 										throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -792,7 +758,7 @@ namespace IVM
 
 									// x_qvijk
 									{
-										const size_t index = _index_x_qvijk(data, q, v, i, j, k);
+										const size_t index = index_x_qvijk(q, v, i, j, k);
 										if (index >= nb_variables)
 											throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -850,7 +816,7 @@ namespace IVM
 							// sum(j) x_qvij,k+1
 							for (int j = 0; j < nb_locations; ++j)
 							{
-								const size_t index = _index_x_qvijk(data, q, v, i, j, k + 1);
+								const size_t index = index_x_qvijk(q, v, i, j, k + 1);
 								if (index >= nb_variables)
 									throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -862,7 +828,7 @@ namespace IVM
 							// sum(j) x_qvjik
 							for (int j = 0; j < nb_locations; ++j)
 							{
-								const size_t index = _index_x_qvijk(data, q, v, j, i, k);
+								const size_t index = index_x_qvijk(q, v, j, i, k);
 								if (index >= nb_variables)
 									throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -915,7 +881,7 @@ namespace IVM
 					{
 						for (int j = 0; j < nb_locations; ++j)
 						{
-							const size_t index = _index_x_qvijk(data, q, v, i, j, k);
+							const size_t index = index_x_qvijk(q, v, i, j, k);
 							if (index >= nb_variables)
 								throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -968,7 +934,7 @@ namespace IVM
 
 							// x_qvijk
 							{
-								const size_t index = _index_x_qvijk(data, q, v, i, j, k);
+								const size_t index = index_x_qvijk(q, v, i, j, k);
 								if (index >= nb_variables)
 									throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -979,7 +945,7 @@ namespace IVM
 
 							// - y_qv
 							{
-								const size_t index = _index_y_qv(data, q, v);
+								const size_t index = index_y_qv(q, v);
 								if (index >= nb_variables)
 									throw std::runtime_error("Error in function IP_model_routing::build_problem(). Index variable exceeds range");
 
@@ -1021,9 +987,6 @@ namespace IVM
 			CPXgeterrorstring(env, status, error_text);
 			throw std::runtime_error("Error in function IP_model_routing::build_problem(). \nCouldn't write problem to lp-file. \nReason: " + std::string(error_text));
 		}
-
-		std::chrono::duration<double, std::ratio<1, 1>> elapsed_time = std::chrono::system_clock::now() - start_time;
-		std::cout << "\nElapsed time building problem (s): " << elapsed_time.count();
 	}
 
 	void IP_model_routing::solve_problem(const Instance& data, size_t day)
@@ -1065,20 +1028,12 @@ namespace IVM
 			throw std::runtime_error("Error in function IP_model_allocation::solve_problem(). \nCouldn't set search strategy. \nReason: " + std::string(error_text));
 		}
 
-		// Set presolve off
-		/*status = CPXsetintparam(env, CPXPARAM_Preprocessing_Presolve, CPX_OFF);
-		if (status != 0)
-		{
-			CPXgeterrorstring(env, status, error_text);
-			throw std::runtime_error("Error in function IP_model_allocation::solve_problem(). \nCouldn't turn presolve off. \nReason: " + std::string(error_text));
-		}*/
-
 		// Assign memory for solution
 		const int numvar = CPXgetnumcols(env, problem);
 		solution_problem = std::make_unique<double[]>(numvar);
 
 		// Optimize the problem
-		std::cout << "\n\nIP_model_routing: CPLEX is solving the problem ...";
+		std::cout << "\n\nSolving the routing problem for day " << day + 1;
 		auto start_time = std::chrono::system_clock::now();
 
 		status = CPXmipopt(env, problem);
@@ -1103,14 +1058,13 @@ namespace IVM
 		auto p = CPXgetstatstring(env, solstat, solstat_text);
 		if (p != nullptr)
 		{
-			std::cout << "\n\nDone solving ... \n\nSolution status: " << solstat_text;
+			std::cout << "\nResult solve: " << solstat_text;
 
 			if (solstat == CPXMIP_OPTIMAL || solstat == CPXMIP_OPTIMAL_TOL || solstat == CPXMIP_TIME_LIM_FEAS)
 			{
 				_objective_value = objval;
-				std::cout << "\nObjval = " << objval;
+				std::cout << "\nObjective value = " << objval;
 				std::cout << "\nElapsed time (s): " << elapsed_time_IP.count();
-
 				const size_t nb_waste_types = data.nb_waste_types();
 				const size_t nb_truck_types = data.nb_truck_types();
 				const size_t nb_zones = data.nb_zones();

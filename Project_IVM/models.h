@@ -102,6 +102,12 @@ namespace IVM
 		int _scenario = 0;
 
 		/*!
+		 *	@brief Get a string that describes the current scenario
+		 *	@returns	A string describing the current scenario
+		 */
+		const std::string scenario_name() const;
+
+		/*!
 		 *	@brief The maximum computation time (in seconds)
 		 */
 		double _max_computation_time = 60;
@@ -206,48 +212,6 @@ namespace IVM
 		 *	@brief Release CPLEX memory
 		 */
 		void clear_cplex();
-
-		/*!
-		 *	@brief Auxiliary function to give the correct index for the x variables
-		 *  @param data	The problem data
-		 *  @param q	index for the truck type
-		 *  @param v	index for the vehicle
-		 *  @param i	index for the origin location
-		 *  @param j	index for the destination location
-		 *  @param k	index for the route segment
-		 *  @returns	the index of the x_qvijk variable in the model
-		 */
-		size_t _index_x_qvijk(const Instance& data, int q, int v, int i, int j, int k) const;
-
-		/*!
-		 *	@brief Auxiliary function to give the correct index for the w variables
-		 *  @param data	The problem data
-		 *  @param t	index for the waste type
-		 *  @param q	index for the truck type
-		 *  @param v	index for the vehicle
-		 *  @param i	index for the location
-		 *  @param k	index for the route segment
-		 *  @returns	the index of the w_tqvik variable in the model
-		 */
-		size_t _index_w_tqvik(const Instance& data, int t, int q, int v, int i_zone, int k) const;
-
-		/*!
-		 *	@brief Auxiliary function to give the correct index for the y variables
-		 *  @param data	The problem data
-		 *  @param q	index for the truck type
-		 *  @param v	index for the vehicle
-		 *  @returns	the index of the y_qv variable in the model
-		 */
-		size_t _index_y_qv(const Instance& data, int q, int v) const;
-
-		/*!
-		 *	@brief Auxiliary function to give the correct index for the beta variables
-		 *  @param data	The problem data
-		 *  @param q	index for the truck type
-		 *  @param v	index for the vehicle
-		 *  @returns	the index of the beta_qv variable in the model
-		 */
-		size_t _index_beta_qv(const Instance& data, int q, int v) const;
 
 		/*!
 		 *	@brief The available number of trucks
@@ -414,7 +378,7 @@ namespace IVM
 		 *	@brief If true, we include theta_r per route (constraint on assignment of routes to days)
 		 *		   If false, we include theta_tm per waste type and zone (constraint on max visits per zone)
 		 */
-		bool _penalty_on_route_assignment = true;
+		bool _penalty_on_route_assignment = false;
 
 		/*!
 		 *        @brief Print the solver's output to screen
