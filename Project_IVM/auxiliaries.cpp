@@ -165,14 +165,14 @@ namespace aux
 
 		const int max_visits = 1;
 		const double max_time = 7.5;
-		const double unloading_time = 0.25; // Jens
+		const double unloading_time = 0.17; 
 
 		const double fixedcosts = dist_costs(engine) * 100;
 		const double operatingcosts = dist_costs(engine) * 10;
-		const double capacity_truckgft_gft = 10;
-		const double capacity_truckgft_rest = 12.5;
+		const double capacity_truckgft_gft = 10.2;
+		const double capacity_truckgft_rest = 0;
 		const double capacity_truckrest_gft = 0;
-		const double capacity_truckrest_rest = 25;
+		const double capacity_truckrest_rest = 10.2;
 
 
 		std::ofstream file;
@@ -184,7 +184,7 @@ namespace aux
 		}
 
 		file << "<?xml version=\"1.0\"?>\n<Instantie naam=\"Random\" aantal_dagen=\"" << _nb_days << "\" aantal_weken=\"" << _nb_weeks << "\" max_bezoeken=\"" << max_visits << "\">"
-			<< "\n\t<Afvaltype naam=\"GFT\" lostijd=\"0.25\"/>\n\t<Afvaltype naam=\"restafval\" lostijd=\"0.25\"/>"
+			<< "\n\t<Afvaltype naam=\"GFT\" lostijd=\"0.17\"/>\n\t<Afvaltype naam=\"restafval\" lostijd=\"0.17\"/>"
 			<< "\n\t<Trucktype naam=\"truck_GFT\" max_uren=\"" << max_time << "\" vaste_kosten=\"" << fixedcosts << "\" variabele_kosten=\"" << operatingcosts << "\">"
 			<< "\n\t\t<Capaciteit afvaltype=\"GFT\" cap=\"" << capacity_truckgft_gft << "\"/>"
 			<< "\n\t\t<Capaciteit afvaltype=\"restafval\" cap=\"" << capacity_truckgft_rest << "\"/>"
@@ -200,6 +200,7 @@ namespace aux
 			file << "\n\t<Collectiepunt naam=\"CP" << i + 1 << "\">"
 				<< "\n\t\t<ToegelatenAfval naam=\"restafval\"/>"
 				<< "\n\t\t<ToegelatenAfval naam=\"GFT\"/>"
+				<< "\n\t\t<Rijtijd naar=\"Depot\" tijd=\"" << static_cast<double>(dist_drive_time(engine)) / 10.0 << "\"/>"
 				<< "\n\t</Collectiepunt>";
 		}
 

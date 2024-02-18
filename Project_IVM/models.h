@@ -8,6 +8,30 @@
 /*!
  *  @file       Models.h
  *  @brief      Defines the IP models for the IVM scheduling problem
+ *
+ *  The IP_model_allocation class builds and solves an IP model to
+ *  assign pickup days to zones. The objective function tries to
+ *  level the amounts of waste picked up over the days in the planning
+ *  horizon. The constraints take into account the maximum number of
+ *  visits per week per zone, days on which no pickups are allowed,
+ *  and the structure of the calendar (e.g. same day for different
+ *  types of waste). This model is solved _before_ the routing model
+ *  is solved.
+ *
+ *  The IP_model_routing class builds and solves an IP model to
+ *  find the optimal routes to organize the pickups in all zones
+ *  for a given day. A calendar needs to be specified through the
+ *  Instance class so that the model knows the amounts of the
+ *  different types of waste that need to be picked up in every zone.
+ *
+ *  The IP_model_allocation_post class builds and solves an IP model
+ *  that takes a set of proposed routes and triest to assign these
+ *  routes to the different days in the planning horizon to build a
+ *  calendar that (i) tries to minimize the maximum number of routes
+ *  assigned to a single day, (ii) tries to minimize the number of
+ *  pickup days for every zone, and (iii) tries to take the preferred
+ *  pickup days into account. This model is solved _after_ the routing
+ *  model is solved.
  */
 
 #pragma once
@@ -15,6 +39,7 @@
 #define MODELS_H
 
 #include "ilcplex/cplex.h"
+#include <string>
 #include <memory>
 #include <chrono>
 #include <vector>
@@ -86,6 +111,11 @@ namespace IVM
 		 */
 		double _objective_value = -1;
 
+		/*!
+		 *        @brief Print the solver's output to screen
+		 */
+		bool _output_solver = false;
+
 
 	public:
 		/*!
@@ -93,6 +123,12 @@ namespace IVM
 		 *  @param	fraction	The fraction of deviations that is allowed (between 0 and 1)
 		 */
 		void set_fraction_allowed_deviations(double fraction) { _fraction_allowed_deviations = fraction; }
+
+		/*!
+         *	@brief Set the output to screen for the solver on/off.
+         *  @param	on	If true, output is turned on; otherwise output is turned off
+         */
+		void set_solver_output_on(bool on) { _output_solver = on; }
 
 		/*!
 		 *	@brief The possible scenarios
@@ -247,8 +283,19 @@ namespace IVM
 		 */
 		double _objective_value = -1;
 
+		/*!
+		 *        @brief Print the solver's output to screen
+		 */
+		bool _output_solver = false;
+
 
 	public:
+
+		/*!
+		 *	@brief Set the output to screen for the solver on/off.
+		 *  @param	on	If true, output is turned on; otherwise output is turned off
+		 */
+		void set_solver_output_on(bool on) { _output_solver = on; }
 
 		/*!
 		 *	@brief Set the maximum number of trucks (for each type)
@@ -359,9 +406,20 @@ namespace IVM
 		double _objcoeff_beta = 1;
 
 		/*!
-		 *	@brief The coefficient of the theta_tm variables in the objective function
+		 *	@brief The coefficient of the theta variables in the objective function
 		 */
-		double _objcoeff_theta_tm = 1;
+		double _objcoeff_theta = 1;
+
+		/*!
+		 *	@brief If true, we include theta_r per route (constraint on assignment of routes to days)
+		 *		   If false, we include theta_tm per waste type and zone (constraint on max visits per zone)
+		 */
+		bool _penalty_on_route_assignment = true;
+
+		/*!
+		 *        @brief Print the solver's output to screen
+		 */
+		bool _output_solver = false;
 
 
 	public:
@@ -374,7 +432,6 @@ namespace IVM
 			FIXED_WEEK_SAME_DAY,	///< Restafval in ene week, GFT in andere week, zelfde dag
 			FIXED_WEEK_FREE_DAY,	///< Restafval in ene week, GFT in andere week, niet noodzakelijk zelfde dag
 			FREE_WEEK_FREE_DAY,		///< Vrije keuze van week of dag
-			CURRENT_CALENDAR		///< Huidige kalender (niet echt optimalisatie)
 		};
 
 		/*!
@@ -402,10 +459,22 @@ namespace IVM
 		void set_coefficient_beta(double value) { _objcoeff_beta = value; }
 
 		/*!
-		 *	@brief Set the coefficient of the theta_tm variables in the objective function
+		 *	@brief Set the coefficient of the theta variables in the objective function
 		 *  @param	value	The new value for the coefficient
 		 */
-		void set_coefficient_theta_tm(double value) { _objcoeff_theta_tm = value; }
+		void set_coefficient_theta(double value) { _objcoeff_theta = value; }
+
+		/*!
+		 *	@brief Choose between penalty on route assignment or on max visits
+		 *  @param	yes		True if penalty on route assignment, false if penalty on max visits.
+		 */
+		void set_penalty_route_assignment(bool yes) { _penalty_on_route_assignment = yes; }
+
+		/*!
+		 *	@brief Set the output to screen for the solver on/off.
+		 *  @param	on	If true, output is turned on; otherwise output is turned off
+		 */
+		void set_solver_output_on(bool on) { _output_solver = on; }
 
 		/*!
 		 *	@brief Get the objective value of the solution

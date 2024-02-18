@@ -8,6 +8,12 @@
 /*!
  *  @file       Data.h
  *  @brief      Defines the data for the IVM scheduling problem
+ *
+ *  This class is used to store all data that serve as input
+ *  to the optimization models. Reading of data is done via
+ *  XML files. Data should first be read in in an Instance
+ *  object and that object is then passed to the optimization
+ *  model objects so that an IP model can be built and solved.
  */
 
 #pragma once
@@ -200,9 +206,9 @@ namespace IVM
 			std::string _waste_type;
 
 			/*!
-			 *	@brief	The zones that are visited (first element) and the amounts that are picked up (second element)
+			 *	@brief	The zones that are visited 
 			 */
-			std::vector<std::pair<std::string, double>> _pickups;
+			std::vector<std::string> _pickups;
 
 			/*!
 			 *	@brief	The day on which this route is used (index of day)
@@ -359,6 +365,14 @@ namespace IVM
 		bool current_calendar(size_t zone, const std::string& waste_type, size_t day, size_t week) const;
 
 		/*!
+		 *	@brief Check whether pickups are forbidden in a given zone on a given day
+		 *  @param	zone	The index for the zone
+		 *  @param	day		The day
+		 *  @returns	True if pickups are forbidden, false otherwise
+		 */
+		bool zone_forbidden_day(size_t zone, size_t day) const;
+
+		/*!
 		 *	@brief Get the number of pickups in the current calendar
 		 *  @returns	The number of pickups
 		 */
@@ -463,7 +477,7 @@ namespace IVM
 		 *  @param	index_route		The index for the route
 		 *  @returns	The number of times the route is used
 		 */
-		size_t route_nb_times_used(size_t index_route) const { _routes[index_route]._nb_times_used; }
+		size_t route_nb_times_used(size_t index_route) const { return _routes[index_route]._nb_times_used; }
 
 		/*!
 		 *	@brief	See if a route visits a given zone
@@ -478,7 +492,7 @@ namespace IVM
 		 *  @param	index_route		The index for the route
 		 *  @returns	The name of the waste type
 		 */
-		const std::string& route_waste_type_name(size_t index_route) const { _routes[index_route]._waste_type; }
+		const std::string& route_waste_type_name(size_t index_route) const { return _routes[index_route]._waste_type; }
 
 		/*!
 		 *	@brief	See if a route picks up a given type of waste

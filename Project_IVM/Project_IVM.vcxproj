@@ -159,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="auxiliaries.h" />
+    <ClInclude Include="cxxopts.h" />
     <ClInclude Include="data.h" />
     <ClInclude Include="models.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>

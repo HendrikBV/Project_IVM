@@ -36,7 +36,10 @@ namespace IVM
 		}
 
 		// turn output to screen on/off
-		status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_ON);
+		if (_output_solver)
+			status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_ON);
+		else
+			status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_OFF);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
@@ -545,6 +548,7 @@ namespace IVM
 				int week = day / nb_days; // integer division
 
 				rhs[0] = data.x_tmdw(t, m, dayweek, week);
+
 				sense[0] = 'E';
 				matbeg[0] = 0;
 
@@ -1307,17 +1311,6 @@ namespace IVM
 
 
 
-				struct Route
-				{
-					std::string trucktype;
-					std::string wastetype;
-					double hours = 0;
-					std::vector<std::string> destinations; // e.g. depot, zoneA, CP1, zoneB, CP1, depot
-					std::vector<int> amounts;	// amounts picked up at respective zones
-					int nb_times_used = 1;
-				};
-				std::vector<Route> routes;
-
 				// Routes to table
 				{
 					try
@@ -1342,6 +1335,17 @@ namespace IVM
 						solfile << "\n\nObjective value = " << objval;
 						solfile << "\nFixed costs = " << fixed_costs;
 						solfile << "\nVariable costs = " << variable_costs << "\n\n";*/
+
+						struct Route
+						{
+							std::string trucktype;
+							std::string wastetype;
+							double hours = 0;
+							std::vector<std::string> destinations; // e.g. depot, zoneA, CP1, zoneB, CP1, depot
+							std::vector<int> amounts;	// amounts picked up at respective zones
+							int nb_times_used = 1;
+						};
+						std::vector<Route> routes;
 
 
 						// calculate routes
@@ -1404,7 +1408,7 @@ namespace IVM
 
 						// write routes to file
 						if(day == 0)
-							solfile << "\n\n\nDag\tVrachtwagen\tTijd\tRoute\tHoeveelheden\tAantal_keer_gebruikt";
+							solfile << "\n\n\nDag\tVrachtwagen\tRoute\tHoeveelheden\tAantal_keer_gebruikt";
 						for (auto&& r : routes) {
 							solfile << "\n" << day + 1 << "\t" << r.trucktype << "\t";// << r.hours << "\t";
 							for (size_t ii = 0; ii < r.destinations.size(); ++ii) {
@@ -1431,6 +1435,10 @@ namespace IVM
 					}
 				}
 
+
+
+
+
 				// Routes to table (bis)
 				{
 					try
@@ -1441,6 +1449,13 @@ namespace IVM
 							solfile.open(filename);
 						else
 							solfile.open(filename, std::ios_base::app); // append
+
+						std::ofstream truckfile;
+						filename = data.name_instance() + "_trucks.txt";
+						if (day == 0)
+							truckfile.open(filename);
+						else
+							truckfile.open(filename, std::ios_base::app); // append
 
 						if (day == 0)
 						{
@@ -1521,6 +1536,14 @@ namespace IVM
 							solfile << "\t" << r.nb_times_used;
 						}
 						solfile.flush();
+
+						int tottrucks = 0;
+						for (auto&& r : routes) {
+							tottrucks += r.nb_times_used;
+						}
+
+						truckfile << "\n" << day + 1 << " " << tottrucks;
+						truckfile.flush();
 					}
 					catch (const std::exception& e)
 					{
@@ -1531,10 +1554,78 @@ namespace IVM
 					}
 				}
 
+
+
+
 				// Write routes to xml file
 				{
 					try
 					{
+						struct Route
+						{
+							std::string wastetype;
+							std::string trucktype;
+							std::vector<std::string> destinations; // only zones (not depot, dropoff locations)
+							int nb_times_used = 1;
+						};
+						std::vector<Route> routes;
+
+						// calculate routes
+						for (int q = 0; q < nb_truck_types; ++q) {
+							for (int v = 0; v < _max_nb_trucks; ++v) {
+								if (y_qv.at(q * _max_nb_trucks + v) > 0) {
+									// route
+									Route newroute;
+									newroute.trucktype = data.truck_type(q);
+
+									for (int t = 0; t < nb_waste_types; ++t) {
+										for (int m = 0; m < nb_zones; ++m) {
+											for (int k = 0; k < _max_nb_segments; ++k) {
+												double wval = w_tqvik.at(t * nb_truck_types * _max_nb_trucks * nb_zones * _max_nb_segments + q * _max_nb_trucks * nb_zones * _max_nb_segments + v * nb_zones * _max_nb_segments + m * _max_nb_segments + k);
+												if (wval > 0.001) {
+													newroute.wastetype = data.waste_type(t);
+													break;
+												}
+											}
+										}
+									}
+
+									for (int k = 0; k < _max_nb_segments; ++k) {
+										for (int i = 0; i < nb_locations; ++i) {
+											for (int j = 0; j < nb_locations; ++j) {
+												int xval = x_qvijk.at(q * _max_nb_trucks * nb_locations * nb_locations * _max_nb_segments + v * nb_locations * nb_locations * _max_nb_segments + i * nb_locations * _max_nb_segments + j * _max_nb_segments + k);
+												if (xval > 0) {
+													std::string destination;
+													if (j < nb_zones) { // Only zones
+														destination = data.zone_name(j);
+														newroute.destinations.push_back(destination);
+													}
+												}
+											}
+										}
+									}
+
+									// check if route already exists
+									bool already_exists = false;
+									for (auto&& er : routes) {
+										if (er.trucktype == newroute.trucktype && er.destinations == newroute.destinations) {
+											already_exists = true;
+											++er.nb_times_used;
+											break;
+										}
+									}
+									if (!already_exists) {
+										routes.push_back(newroute);
+									}
+								}
+							}
+						}
+
+
+
+
+
+
 						std::ofstream solfile;
 						std::string filename = data.name_instance() + "_routes.xml";
 						if (day == 0)
@@ -1546,8 +1637,6 @@ namespace IVM
 						{
 							solfile << "<?xml version=\"1.0\"?>"
 								<< "\n<Routes instantie=\"" << data.name_instance() << "\""
-								<< " vaste_kosten=\"" << fixed_costs << "\""
-								<< " variabele_kosten=\"" << variable_costs << "\""
 								<< " max_rekentijd=\"" << _max_computation_time << "\""
 								<< " max_trucks_per_type=\"" << _max_nb_trucks << "\""
 								<< " max_nb_segmenten=\"" << _max_nb_segments << "\">";
@@ -1563,18 +1652,17 @@ namespace IVM
 								<< " afval_type=\"" << rr.wastetype << "\""
 								<< " dag=\"" << dagstr << "\""
 								<< " week=\"" << week + 1 << "\""
-								<< " rijtijd=\"" << rr.hours << "\""
 								<< " aantal_keer_gebruikt=\"" << rr.nb_times_used << "\">";
-							for (int ii = 0; ii < rr.amounts.size(); ++ii)
+
+							for (auto&& zone : rr.destinations)
 							{
-								int index_dest = ii + 1;
-								solfile << "\n\t\t<Ophaling zone=\"" << rr.destinations[index_dest] << "\""
-									<< " hoeveelheid=\"" << rr.amounts[ii] << "\"/>";
+								solfile << "\n\t\t<Ophaling zone=\"" << zone << "\"/>";
 							}
+
 							solfile << "\n\t</Route>";
 						}
 
-						if (day == data.nb_days() - 1)
+						if (day == data.nb_days()*data.nb_weeks() - 1)
 							solfile << "\n</Routes>";
 
 

@@ -18,7 +18,7 @@
 namespace IVM
 {
 	///////////////////////////////////////////
-	///			 IP Model Allocation 		///
+	///		 IP Model Allocation Post		///
 	///////////////////////////////////////////
 
 	void IP_model_allocation_post::initialize_cplex()
@@ -35,7 +35,10 @@ namespace IVM
 		}
 
 		// turn output to screen on/off
-		status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_ON);
+		if (_output_solver)
+			status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_ON);
+		else
+			status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_OFF);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);
@@ -202,38 +205,8 @@ namespace IVM
 			}
 		}
 
-		// variable theta_tm
-		const int startindex_theta_tm = startindex_z_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
-		for (int t = 0; t < nb_types; ++t)
-		{
-			for (int m = 0; m < nb_zones; ++m)
-			{
-				++nb_variables;
-
-				obj[0] = _objcoeff_theta_tm;
-				lb[0] = 0;
-				type[0] = 'I';
-
-				status = CPXnewcols(env, problem, 1, obj, lb, NULL, type, NULL);
-				if (status != 0)
-				{
-					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
-				}
-
-				// change variable name
-				std::string varname = "beta_" + std::to_string(t + 1) + "_" + std::to_string(m + 1);
-				status = CPXchgname(env, problem, 'c', nb_variables, varname.c_str());
-				if (status != 0)
-				{
-					CPXgeterrorstring(env, status, error_text);
-					throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
-				}
-			}
-		}
-
 		// variabele beta
-		const int startindex_beta = startindex_z_tmdw + nb_types * nb_zones;
+		const int startindex_beta = startindex_z_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
 		{
 			++nb_variables;
 
@@ -258,6 +231,66 @@ namespace IVM
 			}
 		}
 
+		// variable theta_tm or theta_r
+		const int startindex_theta = startindex_beta + 1;
+		if (_penalty_on_route_assignment)
+		{
+			for (int r = 0; r < nb_routes; ++r)
+			{
+				++nb_variables;
+
+				obj[0] = _objcoeff_theta * data.route_nb_times_used(r);
+				lb[0] = 0;
+				type[0] = 'I';
+
+				status = CPXnewcols(env, problem, 1, obj, lb, NULL, type, NULL);
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+				}
+
+				// change variable name
+				std::string varname = "theta_" + std::to_string(r + 1);
+				status = CPXchgname(env, problem, 'c', nb_variables, varname.c_str());
+				if (status != 0)
+				{
+					CPXgeterrorstring(env, status, error_text);
+					throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+				}
+			}
+		}
+		else
+		{
+			for (int t = 0; t < nb_types; ++t)
+			{
+				for (int m = 0; m < nb_zones; ++m)
+				{
+					++nb_variables;
+
+					obj[0] = _objcoeff_theta;
+					lb[0] = 0;
+					type[0] = 'I';
+
+					status = CPXnewcols(env, problem, 1, obj, lb, NULL, type, NULL);
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't add variable. \nReason: " + std::string(error_text));
+					}
+
+					// change variable name
+					std::string varname = "theta_" + std::to_string(t + 1) + "_" + std::to_string(m + 1);
+					status = CPXchgname(env, problem, 'c', nb_variables, varname.c_str());
+					if (status != 0)
+					{
+						CPXgeterrorstring(env, status, error_text);
+						throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't change variable name. \nReason: " + std::string(error_text));
+					}
+				}
+			}
+		}
+
 
 		// lambdas to get variable indices
 		auto index_x_rdw = [startindex_x_rdw, nb_days, nb_weeks](int r, int d, int w) -> int {
@@ -269,15 +302,18 @@ namespace IVM
 		auto index_z_tmdw = [startindex_z_tmdw, nb_zones, nb_days, nb_weeks](int t, int m, int d, int w) -> int {
 			return startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 			};
-		auto index_theta_tm = [startindex_theta_tm, nb_zones](int t, int m) -> int {
-			return startindex_theta_tm + t * nb_zones + m;
+		auto index_theta_tm = [startindex_theta, nb_zones](int t, int m) -> int {
+			return startindex_theta + t * nb_zones + m;
+			};
+		auto index_theta_r = [startindex_theta](int r) -> int {
+			return startindex_theta + r;
 			};
 
 
 		// add constraints
 		int nb_constraints = -1;
 
-		// 1: sum(d,w) x_rdw == 1   forall r
+		// 1: sum(d,w) x_rdw == 1 - theta_r   forall r
 		for (int r = 0; r < nb_routes; ++r)
 		{
 			++nb_constraints;
@@ -297,6 +333,14 @@ namespace IVM
 					matval[nonzeroes] = 1;
 					++nonzeroes;
 				}
+			}
+
+			if (_penalty_on_route_assignment)
+			{
+				// theta_r
+				matind[nonzeroes] = index_theta_r(r);
+				matval[nonzeroes] = 1;
+				++nonzeroes;
 			}
 
 			if (nonzeroes >= maxnonzeroes)
@@ -426,7 +470,54 @@ namespace IVM
 			}
 		}
 
-		// 4: sum(d,w) y_tmdw - theta_tm <= W   forall t,m
+		// 4: y_tmdw <= V_md   forall t,m,d,w
+		for (int t = 0; t < nb_types; ++t)
+		{
+			for (int m = 0; m < nb_zones; ++m)
+			{
+				for (int d = 0; d < nb_days; ++d)
+				{
+					for (int w = 0; w < nb_weeks; ++w)
+					{
+						++nb_constraints;
+
+						rhs[0] = !data.zone_forbidden_day(m,d); // bool to int
+						sense[0] = 'L';
+						matbeg[0] = 0;
+
+						nonzeroes = 0;
+
+						// y_tmdw
+						{
+							matind[nonzeroes] = index_y_tmdw(t, m, d, w);
+							matval[nonzeroes] = 1;
+							++nonzeroes;
+						}
+
+						if (nonzeroes >= maxnonzeroes)
+							throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). Nonzeroes exceeds size of maxnonzeroes (matind and matval)");
+
+						status = CPXaddrows(env, problem, 0, 1, nonzeroes, rhs, sense, matbeg, matind.get(), matval.get(), NULL, NULL);
+						if (status != 0)
+						{
+							CPXgeterrorstring(env, status, error_text);
+							throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't add constraint. \nReason: " + std::string(error_text));
+						}
+
+						// change name of constraint
+						std::string conname = "c4_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) +"_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
+						status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
+						if (status != 0)
+						{
+							CPXgeterrorstring(env, status, error_text);
+							throw std::runtime_error("Error in function IP_model_allocation_post::build_problem(). \nCouldn't change constraint name. \nReason: " + std::string(error_text));
+						}
+					}
+				}
+			}
+		}
+
+		// 5: sum(d,w) y_tmdw - theta_tm <= W   forall t,m
 		for (int t = 0; t < nb_types; ++t)
 		{
 			for (int m = 0; m < nb_zones; ++m)
@@ -451,6 +542,7 @@ namespace IVM
 				}
 
 				// theta_tm
+				if(!_penalty_on_route_assignment)
 				{
 					matind[nonzeroes] = index_theta_tm(t, m);
 					matval[nonzeroes] = -1;
@@ -468,7 +560,7 @@ namespace IVM
 				}
 
 				// change name of constraint
-				std::string conname = "c3_" + std::to_string(t + 1) + "_" + std::to_string(m + 1);
+				std::string conname = "c5_" + std::to_string(t + 1) + "_" + std::to_string(m + 1);
 				status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 				if (status != 0)
 				{
@@ -478,7 +570,7 @@ namespace IVM
 			}
 		}
 
-		// 5: y_tmdw - z_tmdw <= h_tmdw   forall t,m,d,w
+		// 6: y_tmdw - z_tmdw <= h_tmdw   forall t,m,d,w
 		for (int t = 0; t < nb_types; ++t)
 		{
 			for (int m = 0; m < nb_zones; ++m)
@@ -518,7 +610,7 @@ namespace IVM
 						}
 
 						// change name of constraint
-						std::string conname = "c4_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
+						std::string conname = "c6_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
 						status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 						if (status != 0)
 						{
@@ -530,7 +622,7 @@ namespace IVM
 			}
 		}
 
-		// 6: y_tmdw + z_tmdw >= h_tmdw   forall t,m,d,w
+		// 7: y_tmdw + z_tmdw >= h_tmdw   forall t,m,d,w
 		for (int t = 0; t < nb_types; ++t)
 		{
 			for (int m = 0; m < nb_zones; ++m)
@@ -570,7 +662,7 @@ namespace IVM
 						}
 
 						// change name of constraint
-						std::string conname = "c5_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
+						std::string conname = "c7_" + std::to_string(t + 1) + "_" + std::to_string(m + 1) + "_" + std::to_string(d + 1) + "_" + std::to_string(w + 1);
 						status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 						if (status != 0)
 						{
@@ -585,7 +677,7 @@ namespace IVM
 		// Enkel indien scenario van toepassing is
 		if (_scenario == FIXED_WEEK_SAME_DAY)
 		{
-			// 9. y_1,md,1 == y_2,md,2   forall m,d
+			// 8. y_1,md,1 == y_2,md,2   forall m,d
 			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
@@ -619,7 +711,7 @@ namespace IVM
 					}
 
 					// change name of constraint
-					std::string conname = "c9_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					std::string conname = "c8_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
 					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 					if (status != 0)
 					{
@@ -629,7 +721,7 @@ namespace IVM
 				}
 			}
 
-			// 9bis. y_1,md,2 == y_2,md,1   forall m,d
+			// 8bis. y_1,md,2 == y_2,md,1   forall m,d
 			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int d = 0; d < nb_days; ++d)
@@ -663,7 +755,7 @@ namespace IVM
 					}
 
 					// change name of constraint
-					std::string conname = "c9bis_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
+					std::string conname = "c8bis_" + std::to_string(m + 1) + "_" + std::to_string(d + 1);
 					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 					if (status != 0)
 					{
@@ -678,7 +770,7 @@ namespace IVM
 		if (_scenario == FIXED_WEEK_FREE_DAY)
 		{
 			// Dit veronderstelt dat max 1 bezoek per week, anders extra variabele nodig
-			// 10. sum(t,d) y_tmdw <= 1   forall(w,m)
+			// 9. sum(t,d) y_tmdw <= 1   forall(w,m)
 			for (int m = 0; m < nb_zones; ++m)
 			{
 				for (int w = 0; w < nb_weeks; ++w)
@@ -713,7 +805,7 @@ namespace IVM
 					}
 
 					// change name of constraint
-					std::string conname = "c10_" + std::to_string(m + 1) + "_" + std::to_string(w + 1);
+					std::string conname = "c9_" + std::to_string(m + 1) + "_" + std::to_string(w + 1);
 					status = CPXchgname(env, problem, 'r', nb_constraints, conname.c_str());
 					if (status != 0)
 					{
@@ -798,8 +890,8 @@ namespace IVM
 				const int startindex_x_rdw = 0;
 				const int startindex_y_tmdw = startindex_x_rdw + nb_routes * nb_days * nb_weeks;
 				const int startindex_z_tmdw = startindex_y_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
-				const int startindex_theta_tm = startindex_z_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
-				const int startindex_beta = startindex_z_tmdw + nb_types * nb_zones;
+				const int startindex_beta = startindex_z_tmdw + nb_types * nb_zones * nb_days * nb_weeks;
+				const int startindex_theta = startindex_beta + 1;
 
 				// lambdas to get variable indices
 				auto index_x_rdw = [startindex_x_rdw, nb_days, nb_weeks](int r, int d, int w) -> int {
@@ -811,8 +903,11 @@ namespace IVM
 				auto index_z_tmdw = [startindex_z_tmdw, nb_zones, nb_days, nb_weeks](int t, int m, int d, int w) -> int {
 					return startindex_z_tmdw + t * nb_zones * nb_days * nb_weeks + m * nb_days * nb_weeks + d * nb_weeks + w;
 					};
-				auto index_theta_tm = [startindex_theta_tm, nb_zones](int t, int m) -> int {
-					return startindex_theta_tm + t * nb_zones + m;
+				auto index_theta_tm = [startindex_theta, nb_zones](int t, int m) -> int {
+					return startindex_theta + t * nb_zones + m;
+					};
+				auto index_theta_r = [startindex_theta](int r) -> int {
+					return startindex_theta + r;
 					};
 
 				
@@ -842,11 +937,12 @@ namespace IVM
 								if (val > 0.000001) {
 									solfile << "\nRoute [";
 									for (int ii = 0; ii < data.route(r)._pickups.size(); ++ii) {
-										solfile << data.route(r)._pickups[ii].first;
-										if (ii < ii < data.route(r)._pickups.size() - 1)
+										solfile << data.route(r)._pickups[ii];
+										if (ii < data.route(r)._pickups.size() - 1)
 											solfile << ",";
 									}
-									solfile << "], dag = " << data.day_name(d) << ", week " << w + 1;
+									solfile << "], afvaltype = " << data.route(r)._waste_type <<
+										", aantal keer = " << data.route(r)._nb_times_used << ", dag = " << data.day_name(d) << ", week " << w + 1;
 								}
 							}
 						}
@@ -880,30 +976,72 @@ namespace IVM
 							}
 						}
 					}
-					solfile << "\n\ntheta_tm";
-					for (int t = 0; t < nb_types; ++t) {
-						for (int m = 0; m < nb_zones; ++m) {
-							size_t index_var = index_theta_tm(t, m);
+					if (_penalty_on_route_assignment)
+					{
+						solfile << "\n\ntheta_r";
+						for (int r = 0; r < nb_routes; ++r) {
+							size_t index_var = index_theta_r(r);
 							double val = solution_problem[index_var];
 							if (val > 0.000001) {
-								solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m);
+								solfile << "\n";
+								for (auto&& dest : data.route(r)._pickups)
+									solfile << dest << ", ";
+								solfile << "aantal_keer = " << data.route_nb_times_used(r);
 							}
 						}
+					}
+					else
+					{
+						solfile << "\n\ntheta_tm";
+						for (int t = 0; t < nb_types; ++t) {
+							for (int m = 0; m < nb_zones; ++m) {
+								size_t index_var = index_theta_tm(t, m);
+								double val = solution_problem[index_var];
+								if (val > 0.000001) {
+									solfile << "\n" << data.waste_type(t) << ", " << data.zone_name(m);
+								}
+							}
+						}
+					}
+					{
+						double val = solution_problem[startindex_beta];
+						solfile << "\n\nbeta\n" << val;
 					}
 
 					// other layout
 					solfile << "\n\n\n\nKalender\nZone\tMaandag\tDinsdag\tWoensdag\tDonderdag\tVrijdag\tMaandag\tDinsdag\tWoensdag\tDonderdag\tVrijdag";
-					for (int t = 0; t < nb_types; ++t) {
-						for (int m = 0; m < nb_zones; ++m) {
-							solfile << "\n" << data.zone_name(m);
-							for (int w = 0; w < nb_weeks; ++w) {
-								for (int d = 0; d < nb_days; ++d) {
-									solfile << "\t";
+					for (int m = 0; m < nb_zones; ++m) {
+						solfile << "\n" << data.zone_name(m);
+						for (int w = 0; w < nb_weeks; ++w) {
+							for (int d = 0; d < nb_days; ++d) {
+								solfile << "\t";
+								for (int t = 0; t < nb_types; ++t) {
 									size_t index_var = index_y_tmdw(t, m, d, w);
 									double val = solution_problem[index_var];
 									if (val > 0.000001) {
-										solfile << data.waste_type(t);;
+										solfile << data.waste_type(t);
 									}
+								}
+							}
+						}
+					}
+
+					// table routes & days
+					solfile << "\n\n\nRoutes-dagen\nWeek\tDag\tAfval\tRoute\tAantal_keer";
+					for (int w = 0; w < nb_weeks; ++w) {
+						for (int d = 0; d < nb_days; ++d) {
+							for (int r = 0; r < nb_routes; ++r) {
+								size_t index_var = index_x_rdw(r, d, w);
+								double val = solution_problem[index_var];
+								if (val > 0.000001) {
+									solfile << "\n" << w + 1 << "\t" << d + 1 << "\t";
+									solfile << data.route(r)._waste_type << "\t";
+									for (int ii = 0; ii < data.route(r)._pickups.size(); ++ii) {
+										solfile << data.route(r)._pickups[ii];
+										if (ii < data.route(r)._pickups.size() - 1)
+											solfile << ", ";
+									}
+									solfile << "\t" << data.route(r)._nb_times_used;
 								}
 							}
 						}

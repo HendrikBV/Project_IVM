@@ -35,7 +35,10 @@ namespace IVM
 		}
 
 		// turn output to screen on/off
-		status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_OFF);
+		if(_output_solver)
+			status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_ON);
+		else
+			status = CPXsetintparam(env, CPXPARAM_ScreenOutput, CPX_OFF);
 		if (status != 0)
 		{
 			CPXgeterrorstring(env, status, error_text);

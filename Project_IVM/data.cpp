@@ -409,26 +409,24 @@ namespace IVM
 			int week = std::stoi(weekstr) - 1;
 			_routes.back()._week = week;
 
+			if (child->Attribute("aantal_keer_gebruikt") == nullptr)
+				throw std::runtime_error("Error in function Instance::read_routes_xml(). Route does not contain an attribute \"aantal_keer_gebruikt\"");
+			std::string keerstr = child->Attribute("aantal_keer_gebruikt");
+			int aantalkeer = std::stoi(keerstr);
+			_routes.back()._nb_times_used = aantalkeer;
+
 			// Pickups
 			tinyxml2::XMLElement* pickup;
 			for (pickup = child->FirstChildElement(); pickup; pickup = pickup->NextSiblingElement())
 			{
-				_routes.back()._pickups.push_back(std::pair<std::string, double>());
-
-				text = child->Value();
+				text = pickup->Value();
 				if (text != "Ophaling")
 					throw std::runtime_error("Error in function Instance::read_routes_xml(). Child of \"Route\" should be \"Ophaling\"");
 
-				if (child->Attribute("zone") == nullptr)
+				if (pickup->Attribute("zone") == nullptr)
 					throw std::runtime_error("Error in function Instance::read_routes_xml(). Ophaling does not contain an attribute \"zone\"");
-				std::string zone = child->Attribute("zone");
-				_routes.back()._pickups.back().first = zone;
-
-				if (child->Attribute("hoeveelheid") == nullptr)
-					throw std::runtime_error("Error in function Instance::read_routes_xml(). Ophaling does not contain an attribute \"hoeveelheid\"");
-				std::string hoeveelheidstr = child->Attribute("hoeveelheid"); // in kg
-				double hoeveelheid = std::stod(hoeveelheidstr);
-				_routes.back()._pickups.back().second = hoeveelheid;
+				std::string zone = pickup->Attribute("zone");
+				_routes.back()._pickups.push_back(zone);
 			}
 		}
 	}
@@ -468,6 +466,15 @@ namespace IVM
 		return (dayfound && weekfound);
 	}
 
+	bool Instance::zone_forbidden_day(size_t zone, size_t day) const 
+	{ 
+		for (auto&& dd : _zones[zone]._forbidden_days)
+			if (dd == day)
+				return true;
+	
+		return false;
+	}
+
 	size_t Instance::nb_pickups_current_calendar() const
 	{
 		int result = 0;
@@ -503,7 +510,7 @@ namespace IVM
 	{
 		for (auto&& v : _routes[index_route]._pickups)
 		{
-			if (v.first == _zones[index_zone]._name)
+			if (v == _zones[index_zone]._name)
 				return true;
 		}
 		return false;
