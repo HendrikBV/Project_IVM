@@ -10,6 +10,7 @@
 #include "cxxopts.h"
 #include <iostream>
 #include <exception>
+#include <stdexcept>
 
 
 
@@ -171,6 +172,11 @@ int main(int argc, char* argv[])
 			model.set_solver_output_on(output);
 			model.run(data);
 		}
+		else
+		{
+			throw std::runtime_error("Model \"" + model + "\"bestaat niet");
+		}
+
 
 		std::cout << "\n\n\n";
 		return EXIT_SUCCESS;
