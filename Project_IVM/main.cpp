@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			throw std::runtime_error("Model \"" + model + "\"bestaat niet");
+			throw std::invalid_argument("Model \"" + model + "\"bestaat niet");
 		}
 
 
