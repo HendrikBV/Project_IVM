@@ -18,23 +18,26 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		cxxopts::Options options("IVM optimalisatietool", "\nDit programma voert de drie optimalisatiemodellen voor afvalophaling uit."
+		cxxopts::Options options("IVM optimalisatietool", "\nDit programma voert vier optimalisatiemodellen voor afvalophaling uit."
 			"\n\nHet eerste model is \"allocatiepre\". Dit model maakt een kalender die de ophaling zo gelijk mogelijk spreidt."
 			"\nHet tweede model is \"routing\". Dit model bepaalt de optimale routes gegeven een ophaalkalender."
 			"\nHet derde model is \"allocatiepost\". Dit model wijst gegenereerde ophaalroutes toe aan ophaaldagen om een ophaalkalender te maken."
+			"\nHet vierde model is \"geintegreerd\". Dit model optimaliseert de routes en de kalender gelijktijdig."
 			"\nDe MIP-solver die wordt gebruik is CPLEX.\n");
 
 		options.add_options()
-			("model", "Welk optimalisatiemodel. Mogelijkheden: \"allocatiepre\", \"routing\", \"allocatiepost\"", cxxopts::value<std::string>())
+			("model", "Welk optimalisatiemodel. Mogelijkheden: \"allocatiepre\", \"routing\", \"allocatiepost\", \"geintegreerd\", \"geintegreerd_fao\"", cxxopts::value<std::string>())
 			("data", "Naam van het xml-bestand met de data voor de instantie", cxxopts::value<std::string>())
 			("routes", "Naam van het xml-bestand met de routes", cxxopts::value<std::string>())
 			("kalender", "Naam van het xml-bestand met de te volgen kalender", cxxopts::value<std::string>())
 			("rekentijd", "De maximale rekentijd in seconden", cxxopts::value<double>())
+			("rekentijd_subprobleem", "De maximale rekentijd per subprobleem (fix-and-optimize)", cxxopts::value<double>())
 			("output", "Zet de output van de solver aan", cxxopts::value<bool>())
 			("scenario", "Het optimalisatiescenario voor de kalenders (0 == FIXED_WEEK_SAME_DAY, 1 == FIXED_WEEK_FREE_DAY, 2 == FREE_WEEK_FREE_DAY", cxxopts::value<int>())
 			("maxafwijkingen", "Percentage maximale afwijkingen tov huidige kalender", cxxopts::value<double>())
 			("maxtrucks", "Het maximale aantal trucks in de routeoptimalisatie (te weinig = infeasible)", cxxopts::value<int>())
 			("maxsegmenten", "Het maximale aantal segmenten per route (minimaal 3)", cxxopts::value<int>())
+			("maxbezoeken", "Het maximale aantal bezoeken over de horizon (geintegreerd model)", cxxopts::value<int>())
 			("ck", "De doelfunctiecoefficient voor afwijkingen tov de huidige kalender (model 3)", cxxopts::value<double>())
 			("cb", "De doelfunctiecoefficient voor het maximale aantal trucks (model 3)", cxxopts::value<double>())
 			("cs", "De doelfunctiecoefficient voor het maximale aantal bezoeken per zone (model 3)", cxxopts::value<double>())
@@ -56,7 +59,7 @@ int main(int argc, char* argv[])
 		if (result.count("data"))
 			datafile = result["data"].as<std::string>();
 
-		double rekentijd = 600;
+		double rekentijd = 300;
 		if (result.count("rekentijd"))
 			rekentijd = result["rekentijd"].as<double>();
 
@@ -101,11 +104,11 @@ int main(int argc, char* argv[])
 		}
 		else if (model == "routing")
 		{
-			int maxtrucks = 15;
+			int maxtrucks = 20;
 			if (result.count("maxtrucks"))
 				maxtrucks = result["maxtrucks"].as<int>();
 
-			int maxsegmenten = 9;
+			int maxsegmenten = 5;
 			if (result.count("maxsegmenten"))
 				maxsegmenten = result["maxsegmenten"].as<int>();
 
@@ -171,6 +174,61 @@ int main(int argc, char* argv[])
 			model.set_max_computation_time(rekentijd);
 			model.set_solver_output_on(output);
 			model.run(data);
+		}
+		else if (model == "geintegreerd")
+		{
+			int maxtrucks = 20;
+			if (result.count("maxtrucks"))
+				maxtrucks = result["maxtrucks"].as<int>();
+
+			int maxsegmenten = 5;
+			if (result.count("maxsegmenten"))
+				maxsegmenten = result["maxsegmenten"].as<int>();
+
+			int maxvisits = 1;
+			if (result.count("maxbezoeken"))
+				maxvisits = result["maxbezoeken"].as<int>();
+
+			IVM::Instance data;
+			data.read_data_xml(datafile);
+
+			IVM::IP_model_integrated model;
+			model.set_max_nb_trucks(maxtrucks);
+			model.set_max_nb_segments(maxsegmenten);
+			model.set_max_computation_time(rekentijd);
+			model.set_max_visits(maxvisits);
+			model.set_solver_output_on(output);
+			model.run(data);
+		}
+		else if (model == "geintegreerd_fao")
+		{
+			int maxtrucks = 20;
+			if (result.count("maxtrucks"))
+				maxtrucks = result["maxtrucks"].as<int>();
+
+			int maxsegmenten = 5;
+			if (result.count("maxsegmenten"))
+				maxsegmenten = result["maxsegmenten"].as<int>();
+
+			double max_time_subproblem = 40;
+			if (result.count("rekentijd_subprobleem"))
+				max_time_subproblem = result["rekentijd_subprobleem"].as<double>();
+
+			int maxvisits = 1;
+			if (result.count("maxbezoeken"))
+				maxvisits = result["maxbezoeken"].as<int>();
+
+			IVM::Instance data;
+			data.read_data_xml(datafile);
+
+			IVM::IP_model_integrated model;
+			model.set_max_nb_trucks(maxtrucks);
+			model.set_max_nb_segments(maxsegmenten);
+			model.set_max_computation_time(rekentijd);
+			model.set_max_computation_time_subproblem(max_time_subproblem);
+			model.set_max_visits(maxvisits);
+			model.set_solver_output_on(output);
+			model.run_fix_and_optimize(data);
 		}
 		else
 		{

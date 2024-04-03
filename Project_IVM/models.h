@@ -452,6 +452,213 @@ namespace IVM
 		 */
 		void run(const Instance& data);
 	};
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*!
+	 *	@brief An integrated model to determine routes and pick-up days simultaneously
+	 */
+	class IP_model_integrated
+	{
+		/*!
+		 *	@brief CPLEX environment pointer
+		 */
+		CPXENVptr env = nullptr;
+
+		/*!
+		 *	@brief CPLEX LP pointer
+		 */
+		CPXLPptr problem = nullptr;
+
+		/*!
+		 *	@brief Initialize the CPLEX environment & problem
+		 */
+		void initialize_cplex();
+
+		/*!
+		 *	@brief Build the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void build_problem(const Instance& data);
+
+		/*!
+		 *	@brief Solve the CPLEX model
+		 *  @param	data	The problem data
+		 */
+		void solve_problem(const Instance& data);
+
+		/*!
+		 *	@brief Release CPLEX memory
+		 */
+		void clear_cplex();
+
+		/*!
+		 *	@brief	When the value |bestbound-bestinteger|/(1e-10+|bestinteger|) falls below the value of this parameter, the mixed integer optimization is stopped.
+		 *			Between 0.0 and 1.0
+		 *			Standard CPLEX value = 0.0001
+		 */
+		double _optimality_tolerance = 0.0001;
+
+		/*!
+		 *	@brief The maximum computation time (in seconds)
+		 */
+		double _max_computation_time = 600;
+
+		/*!
+		 *        @brief Print the solver's output to screen
+		 */
+		bool _output_solver = false;
+
+		/*!
+		 *	@brief The available number of trucks
+		 */
+		size_t _max_nb_trucks = 30;
+
+		/*!
+		 *	@brief	The maximum number of segments in a route
+		 *			Should be minimum 3
+		 *			1 zone == 3 segments, 2 zones == 5 segments, 3 zones == 7 segments and so on
+		 */
+		size_t _max_nb_segments = 9;
+
+		/*!
+		 *	@brief The maximum number of days on which a zone can be visited over the entire period
+		 */
+		size_t _max_visits = 1;
+
+		/*!
+		 *	@brief The objective value of the solution
+		 */
+		double _objective_value = -1;
+
+		/*!
+		 *	@brief The current solution from CPLEX
+		 */
+		std::unique_ptr<double[]> _fao_current_solution_cplex;
+
+		/*!
+		 *	@brief The best found solution so far
+		 */
+		std::unique_ptr<double[]> _fao_best_solution_cplex;
+
+		/*!
+		 *	@brief Maximum computation time per subproblem
+		 */
+		double _fao_max_comptime_subproblem = 40;
+
+		/*!
+		 *	@brief Add constraint to fix a variable
+		 *  @param	index_variable	The index of the variable
+		 *  @param	value	The value of variable
+		 */
+		void fao_fix_variable(size_t index_variable, int value);
+
+		/*!
+		 *	@brief Search the neighborhood 'days'
+		 *  @param	data	The problem data
+		 *  @param	days_free	Days which can be changed
+		 *  @returns	The objective value of the solution
+		 */
+		double fao_search_neighborhood_days(const Instance& data, const std::vector<int>& days_free);
+
+		/*!
+		 *	@brief Search the neighborhood 'zones'
+		 *  @param	data	The problem data
+		 *  @param	zones_free	Zones which can be changed
+		 *  @returns	The objective value of the solution
+		 */
+		double fao_search_neighborhood_zones(const Instance& data, const std::vector<int>& zones_free);
+
+		/*!
+		 *	@brief Search the neighborhood 'vehicles'
+		 *  @param	data	The problem data
+		 *  @param	vehicles_free	Vehicles which can be changed
+		 *  @returns	The objective value of the solution
+		 */
+		double fao_search_neighborhood_vehicles(const Instance& data, const std::vector<int>& vehicles_free);
+
+		/*!
+		 *	@brief Use CPLEX to find an initial feasible solution
+		 *  @returns	The objective value of the solution
+		 */
+		double fao_initial_solution_cplex();
+
+		/*!
+		 *	@brief Write the solution from fix-and-optimize to a file
+		 *  @param	data	The problem data
+		 */
+		void fao_write_solution_file(const Instance& data);
+
+		/*!
+		 *	@brief Use fix-and-optimize to solve the problem
+		 *  @param	data	The problem data
+		 */
+		void fix_and_optimize(const Instance& data);
+
+
+	public:
+
+		/*!
+		 *	@brief Set the maximum computation time
+		 *  @param max_computation_time	The maximum computation time
+		 */
+		void set_max_computation_time(double max_computation_time) { _max_computation_time = max_computation_time; }
+
+		/*!
+		 *	@brief Set the maximum computation time per subproblem for the fix-and-optimize routine
+		 *  @param max_computation_time	The maximum computation time
+		 */
+		void set_max_computation_time_subproblem(double max_computation_time) { _fao_max_comptime_subproblem = max_computation_time; }
+
+		/*!
+		 *	@brief Set the maximum number of trucks (for each type)
+		 *  @param	max_nb_trucks	The maximum number of trucks
+		 */
+		void set_max_nb_trucks(size_t max_nb_trucks) { _max_nb_trucks = max_nb_trucks; }
+
+		/*!
+		 *	@brief Set the maximum number of segments per route
+		 *  @param	max_nb_segements	The maximum number of segments
+		 */
+		void set_max_nb_segments(size_t max_nb_segments) { _max_nb_segments = max_nb_segments; }
+
+		/*!
+		 *	@brief Set the maximum number of visits per zone over the planning horizon
+		 *  @param	max_visits	The maximum number of visits
+		 */
+		void set_max_visits(size_t max_visits) { _max_visits = max_visits; }
+
+		/*!
+		 *	@brief Set the output to screen for the solver on/off.
+		 *  @param	on	If true, output is turned on; otherwise output is turned off
+		 */
+		void set_solver_output_on(bool on) { _output_solver = on; }
+
+		/*!
+		 *	@brief Set the optimality tolerance
+		 *  @param	optimality_tolerance	The optimality tolerance (should be between 0.0 and 1.0)
+		 */
+		void set_optimality_tolerance(double optimality_tolerance) { _optimality_tolerance = optimality_tolerance; }
+
+		/*!
+		 *	@brief Get the objective value of the solution
+		 *  @returns The objective value
+		 */
+		double objective_value() const { return _objective_value; }
+
+		/*!
+		 *	@brief Build and solve the MIP model using a MIP-solver
+		 *  @param	data	The problem data
+		 */
+		void run(const Instance& data);
+
+		/*!
+		 *	@brief Build and solve the MIP model using fix-and-optimize with a MIP-solver
+		 *  @param	data	The problem data
+		 */
+		void run_fix_and_optimize(const Instance& data);
+	};
 }
+
 
 #endif // !MODELS_H
